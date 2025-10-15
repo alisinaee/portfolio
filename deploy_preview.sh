@@ -17,7 +17,6 @@ echo "⚡ Building with WASM..."
 flutter build web \
   --wasm \
   --release \
-  --web-renderer canvaskit \
   --base-href "/"
 
 if [ $? -ne 0 ]; then

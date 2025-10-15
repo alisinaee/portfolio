@@ -17,10 +17,7 @@ echo "⚡ Building with WASM optimization..."
 flutter build web \
   --wasm \
   --release \
-  --web-renderer canvaskit \
-  --pwa-strategy offline-first \
-  --base-href "/" \
-  --dart-define=FLUTTER_WEB_USE_SKIA=true
+  --base-href "/"
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed!"
