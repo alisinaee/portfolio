@@ -1,13 +1,22 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'features/menu/data/data_sources/menu_data_source.dart';
 import 'features/menu/data/repositories/menu_repository_impl.dart';
 import 'features/menu/presentation/controllers/menu_controller.dart';
 import 'features/menu/presentation/pages/menu_page.dart';
 import 'shared/widgets/performance_overlay_widget.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(const MovingTextBackgroundApp());
 }
 
