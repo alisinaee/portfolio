@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moving_text_background_new/features/menu/domain/entities/menu_entity.dart';
-import '../../core/utils/performance_logger.dart';
+import '../../utils/performance_logger.dart';
 
 class FlipAnimation extends StatefulWidget {
   final Widget child;

@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../core/utils/performance_logger.dart';
+import '../../utils/performance_logger.dart';
 
 class DiagonalWidget extends StatefulWidget {
   final Widget child;

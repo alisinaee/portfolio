@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
 import '../../domain/entities/menu_entity.dart';
 import 'menu_item_widget.dart';
-import '../../../../shared/widgets/diagonal_widget.dart';
+import '../../../../core/animations/menu/diagonal_widget.dart';
 
 class MenuWidget extends StatefulWidget {
   const MenuWidget({super.key});

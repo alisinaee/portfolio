@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
 import '../../domain/entities/menu_entity.dart';
-import '../../../../shared/widgets/app_icon_widget.dart';
-import '../../../../shared/widgets/moving_row.dart';
-import '../../../../shared/widgets/flip_animation.dart';
+import 'app_icon_widget.dart';
+import '../../../../core/animations/moving_text/moving_row.dart';
+import '../../../../core/animations/menu/flip_animation.dart';
 
 class MenuItemWidget extends StatelessWidget {
   final MenuEntity menuItem;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/utils/performance_logger.dart';
+import '../../utils/performance_logger.dart';
 
 class MovingRow extends StatefulWidget {
   final int delaySec;
@@ -82,8 +82,8 @@ class _MovingRowState extends State<MovingRow> {
           'toggle_count': _toggleCount,
         });
         
-        // Wait for animation to complete (30 seconds)
-        await Future.delayed(const Duration(seconds: 30));
+        // Wait for animation to complete (3 seconds)
+        await Future.delayed(const Duration(seconds: 3));
         
         // Stop animating - this prevents unnecessary rebuilds
         if (mounted && !_isDisposed) {
@@ -93,7 +93,7 @@ class _MovingRowState extends State<MovingRow> {
         }
         
         // Wait before next animation
-        await Future.delayed(const Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 10));
       }
     }
   }
@@ -156,10 +156,10 @@ class _MovingRowState extends State<MovingRow> {
                 ? AnimatedPositioned(
                     top: 0,
                     bottom: 0,
-                    duration: const Duration(seconds: 30),
+                    duration: const Duration(seconds: 3),
                     left: leftPosition,
                     right: 0,
-                    curve: Curves.linear,
+                    curve: Curves.easeInOut,
                     onEnd: () {
                       // Animation completed - mark as not animating
                       if (mounted && !_isDisposed) {

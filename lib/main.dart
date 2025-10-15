@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -7,7 +7,6 @@ import 'features/menu/data/data_sources/menu_data_source.dart';
 import 'features/menu/data/repositories/menu_repository_impl.dart';
 import 'features/menu/presentation/controllers/menu_controller.dart';
 import 'features/menu/presentation/pages/menu_page.dart';
-import 'shared/widgets/performance_overlay_widget.dart';
 import 'core/utils/memory_manager.dart';
 
 void main() async {
@@ -51,10 +50,7 @@ class MovingTextBackgroundApp extends StatelessWidget {
         // Wrap with PerformanceMonitor for monitoring
         // Set showOverlay to true to enable performance monitoring
         // NOTE: Disable in production for better performance!
-        home: const PerformanceMonitor(
-          showOverlay: false, // Set to true only for debugging
-          child: MenuPage(),
-        ),
+        home: MenuPage(),
       ),
     );
   }

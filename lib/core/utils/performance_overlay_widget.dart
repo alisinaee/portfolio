@@ -1,36 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'dart:ui' as ui;
-import '../../core/utils/performance_logger.dart';
+import 'performance_logger.dart';
 
 /// Performance monitoring widget that displays FPS, frame time, and memory usage
 /// This widget is optimized to have minimal performance impact
 class PerformanceMonitor extends StatefulWidget {
   final Widget child;
   final bool showOverlay;
+  final bool enablePauseOnHidden;
 
   const PerformanceMonitor({
     super.key,
     required this.child,
     this.showOverlay = false,
+    this.enablePauseOnHidden = true,
   });
 
   @override
   State<PerformanceMonitor> createState() => _PerformanceMonitorState();
 }
 
-class _PerformanceMonitorState extends State<PerformanceMonitor> with SingleTickerProviderStateMixin {
-  late Ticker _ticker;
+class _PerformanceMonitorState extends State<PerformanceMonitor> 
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  Ticker? _ticker;
   final List<Duration> _frameTimes = [];
   double _fps = 0.0;
   double _avgFrameTime = 0.0;
   Duration _lastTimestamp = Duration.zero;
+  bool _isPaused = false;
   
   static const int _maxSamples = 60; // Track last 60 frames
 
   @override
   void initState() {
     super.initState();
+    if (widget.enablePauseOnHidden) {
+      WidgetsBinding.instance.addObserver(this);
+    }
     if (widget.showOverlay) {
       _startMonitoring();
     }
@@ -86,17 +93,62 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> with SingleTick
   }
 
   void _stopMonitoring() {
-    _ticker.dispose();
+    _ticker?.dispose();
+    _ticker = null;
     _frameTimes.clear();
     _lastTimestamp = Duration.zero;
   }
 
   @override
   void dispose() {
+    if (widget.enablePauseOnHidden) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
     if (widget.showOverlay) {
-      _ticker.dispose();
+      _ticker?.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!widget.enablePauseOnHidden) return;
+    
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        if (!_isPaused) {
+          _pauseMonitoring();
+        }
+        break;
+      case AppLifecycleState.resumed:
+        if (_isPaused && widget.showOverlay) {
+          _resumeMonitoring();
+        }
+        break;
+      case AppLifecycleState.detached:
+        _stopMonitoring();
+        break;
+      case AppLifecycleState.hidden:
+        if (!_isPaused) {
+          _pauseMonitoring();
+        }
+        break;
+    }
+  }
+
+  void _pauseMonitoring() {
+    if (!_isPaused && widget.showOverlay && _ticker?.isActive == true) {
+      _isPaused = true;
+      _ticker?.stop();
+    }
+  }
+
+  void _resumeMonitoring() {
+    if (_isPaused && widget.showOverlay && _ticker?.isActive == false) {
+      _isPaused = false;
+      _ticker?.start();
+    }
   }
 
   @override
