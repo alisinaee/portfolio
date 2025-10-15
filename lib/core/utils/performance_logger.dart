@@ -9,6 +9,8 @@ class PerformanceLogger {
   static final Map<String, int> _buildCounts = {};
   static final Map<String, DateTime> _lastLog = {};
   
+  static const int _maxMetricsSize = 100; // Limit stored metrics to prevent memory buildup
+  
   /// Log when a widget starts building
   static void startBuild(String widgetName) {
     if (!kDebugPerformance) return;
@@ -101,6 +103,19 @@ class PerformanceLogger {
     _lastLog.clear();
   }
   
+  /// Clean old metrics to prevent memory buildup
+  static void _cleanOldMetrics() {
+    if (_metrics.length > _maxMetricsSize) {
+      // Remove oldest 20% of metrics
+      final toRemove = (_maxMetricsSize * 0.2).toInt();
+      final keys = _metrics.keys.take(toRemove).toList();
+      for (final key in keys) {
+        _metrics.remove(key);
+        _lastLog.remove(key);
+      }
+    }
+  }
+  
   /// Print summary of all tracked widgets
   static void printSummary() {
     if (!kDebugPerformance) return;
@@ -129,6 +144,9 @@ class PerformanceLogger {
     }
     
     _lastLog[widgetName] = now;
+    
+    // Periodically clean old metrics
+    _cleanOldMetrics();
     
     final prefix = level == LogLevel.error
         ? '🔴'

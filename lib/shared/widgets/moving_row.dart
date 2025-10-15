@@ -27,6 +27,7 @@ class _MovingRowState extends State<MovingRow> {
   late final String _performanceId;
   bool start = false;
   bool _isDisposed = false;
+  bool _isAnimating = false;
   int _buildCount = 0;
   int _toggleCount = 0;
 
@@ -63,25 +64,36 @@ class _MovingRowState extends State<MovingRow> {
     });
   }
 
-  // Optimized animation loop - simple and efficient
+  // Optimized animation loop with smart pausing
   void _startAnimation() async {
     while (mounted && !_isDisposed) {
-      // Wait for next cycle
-      await Future.delayed(const Duration(seconds: 5));
-      
-      // Toggle direction only if still mounted
+      // Toggle direction
       if (mounted && !_isDisposed) {
         _toggleCount++;
         PerformanceLogger.logSetState(_performanceId, 'Toggle direction #$_toggleCount');
         
         setState(() {
           start = !start;
+          _isAnimating = true; // Mark as animating
         });
         
         PerformanceLogger.logAnimation(_performanceId, 'Direction toggled', data: {
           'start': start,
           'toggle_count': _toggleCount,
         });
+        
+        // Wait for animation to complete (30 seconds)
+        await Future.delayed(const Duration(seconds: 30));
+        
+        // Stop animating - this prevents unnecessary rebuilds
+        if (mounted && !_isDisposed) {
+          setState(() {
+            _isAnimating = false;
+          });
+        }
+        
+        // Wait before next animation
+        await Future.delayed(const Duration(seconds: 5));
       }
     }
   }
@@ -138,27 +150,50 @@ class _MovingRowState extends State<MovingRow> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            // AnimatedPositioned must be direct child of Stack
-            AnimatedPositioned(
-              top: 0,
-              bottom: 0,
-              duration: const Duration(seconds: 30),
-              left: leftPosition,
-              right: 0,
-              curve: Curves.linear,
-              // RepaintBoundary isolates scrolling animation from parent
-              child: RepaintBoundary(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  // NeverScrollableScrollPhysics is more efficient than BouncingScrollPhysics
-                  // when you don't need user scrolling (animation only)
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Row(
-                    children: children,
+            // Only use AnimatedPositioned when actively animating
+            // This prevents constant rebuilds when animation is paused
+            _isAnimating
+                ? AnimatedPositioned(
+                    top: 0,
+                    bottom: 0,
+                    duration: const Duration(seconds: 30),
+                    left: leftPosition,
+                    right: 0,
+                    curve: Curves.linear,
+                    onEnd: () {
+                      // Animation completed - mark as not animating
+                      if (mounted && !_isDisposed) {
+                        setState(() {
+                          _isAnimating = false;
+                        });
+                      }
+                    },
+                    child: RepaintBoundary(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Row(
+                          children: children,
+                        ),
+                      ),
+                    ),
+                  )
+                : Positioned(
+                    // When not animating, use static Positioned (no rebuilds!)
+                    top: 0,
+                    bottom: 0,
+                    left: leftPosition,
+                    right: 0,
+                    child: RepaintBoundary(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Row(
+                          children: children,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
           ],
         );
       }),
