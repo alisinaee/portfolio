@@ -13,8 +13,8 @@ class MenuPage extends StatelessWidget {
         children: [
           const Positioned.fill(child: MenuWidget()),
           const Positioned(
-            top: 0,
-            left: 0,
+            top: 20,
+            left: 20,
             child: MenuButtonWidget(),
           ),
         ],

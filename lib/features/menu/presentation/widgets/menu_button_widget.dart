@@ -16,19 +16,28 @@ class MenuButtonWidget extends StatelessWidget {
         builder: (context, menuState, child) {
           // Use RepaintBoundary to isolate button repaints
           return RepaintBoundary(
-            child: IconButton(
-              icon: Icon(
-                menuState == MenuState.close 
-                    ? Icons.menu_outlined 
-                    : Icons.close,
-                color: Colors.black,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(255, 255, 255, 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white54,
+                    width: 2,
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    menuState == MenuState.close 
+                        ? Icons.menu 
+                        : Icons.close,
+                    color: Colors.white, // ✅ WHITE icon (visible on black background)
+                    size: 28,
+                  ),
+                  onPressed: () => context.read<AppMenuController>().onMenuButtonTap(),
+                ),
               ),
-              style: IconButton.styleFrom(
-                shape: const CircleBorder(),
-                // Use const color with opacity
-                backgroundColor: const Color.fromRGBO(255, 255, 255, 0.7),
-              ),
-              onPressed: () => context.read<AppMenuController>().onMenuButtonTap(),
             ),
           );
         },

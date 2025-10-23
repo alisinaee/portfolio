@@ -2,6 +2,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/performance_logger.dart';
 
+/// Optimized DiagonalWidget with advanced caching
+/// 
+/// Performance Improvements:
+/// - Enhanced calculation caching (only recalculates on size change)
+/// - Const TextStyle for passive items
+/// - Optimized passive item generation (cached widgets)
+/// - Better RepaintBoundary placement
+/// - Transform.rotate instead of RotationTransition for static rotation
 class DiagonalWidget extends StatefulWidget {
   final Widget child;
 
@@ -47,7 +55,7 @@ class _DiagonalWidgetState extends State<DiagonalWidget> {
     
     final builtWidget = LayoutBuilder(
       builder: (context, constraints) {
-        // Cache calculations - only recalculate if dimensions changed
+        // Check if we need to recalculate
         bool needsRecalculation = _cachedWidth != constraints.maxWidth || 
                                    _cachedHeight != constraints.maxHeight;
         
@@ -89,9 +97,9 @@ class _DiagonalWidgetState extends State<DiagonalWidget> {
                 bottom: -constraints.maxWidth / 8,
                 child: Transform.scale(
                   scaleX: scaleFactor,
-                  // Transform is GPU-accelerated
-                  child: RotationTransition(
-                    turns: AlwaysStoppedAnimation((90 - angle) / 360),
+                  // Use Transform.rotate for static rotation (GPU-accelerated)
+                  child: Transform.rotate(
+                    angle: ((90 - angle) / 360) * 2 * pi,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -99,12 +107,12 @@ class _DiagonalWidgetState extends State<DiagonalWidget> {
                         children: [
                           Expanded(
                             flex: 16,
-                            child: _passiveBuilder(items: _passiveItems.sublist(0, 3)),
+                            child: _PassiveSection(items: _passiveItems.sublist(0, 3)),
                           ),
                           Expanded(flex: 50, child: widget.child),
                           Expanded(
                             flex: 16,
-                            child: _passiveBuilder(items: _passiveItems.sublist(2)),
+                            child: _PassiveSection(items: _passiveItems.sublist(2)),
                           ),
                         ],
                       ),
@@ -121,42 +129,62 @@ class _DiagonalWidgetState extends State<DiagonalWidget> {
     PerformanceLogger.endBuild(_performanceId);
     return builtWidget;
   }
+}
 
-  Widget _passiveBuilder({required List<String> items}) {
-    // Wrap in RepaintBoundary to isolate repaints
+/// Separate stateless widget for passive sections (better optimization)
+class _PassiveSection extends StatelessWidget {
+  final List<String> items;
+
+  const _PassiveSection({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
     return RepaintBoundary(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           3,
-          (index) => _placeholderWidget(txt: items[index]),
+          (index) => _PassiveItem(text: items[index]),
+          growable: false,
         ),
       ),
     );
   }
+}
 
-  Widget _placeholderWidget({required String txt}) {
+/// Separate stateless widget for each passive item
+class _PassiveItem extends StatelessWidget {
+  final String text;
+
+  const _PassiveItem({required this.text});
+
+  // Const border decoration to avoid recreation
+  static const BoxDecoration _decoration = BoxDecoration(
+    border: Border(
+      top: BorderSide(color: Colors.white54, width: 0.5),
+      bottom: BorderSide(color: Colors.white54, width: 0.5),
+      left: BorderSide(color: Colors.white54, width: 0.5),
+      right: BorderSide(color: Colors.white54, width: 0.5),
+    ),
+  );
+
+  // Const text style to avoid recreation
+  static const TextStyle _textStyle = TextStyle(
+    color: Colors.white54,
+    overflow: TextOverflow.ellipsis,
+  );
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
-      // RepaintBoundary must be INSIDE Expanded, not wrapping it
       child: RepaintBoundary(
         child: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: Colors.white54, width: 0.5),
-              bottom: BorderSide(color: Colors.white54, width: 0.5),
-              left: BorderSide(color: Colors.white54, width: 0.5),
-              right: BorderSide(color: Colors.white54, width: 0.5),
-            ),
-          ),
+          decoration: _decoration,
           child: Center(
             child: Text(
-              txt,
-              // Optimize text rendering
-              style: const TextStyle(
-                color: Colors.white54,
-                overflow: TextOverflow.ellipsis,
-              ),
+              text,
+              style: _textStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -167,7 +195,8 @@ class _DiagonalWidgetState extends State<DiagonalWidget> {
   }
 }
 
-List<String> _passiveItems = [
+// Const list to avoid recreation
+const List<String> _passiveItems = [
   'Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE  Made By LOvE',
   '  Copyright © 2024 Ali Sianee. All rights reserved.  Copyright © 2024 Ali Sianee. All rights reserved.  Copyright © 2024 Ali Sianee. All rights reserved.  Copyright © 2024 Ali Sianee. All rights reserved.  Copyright © 2024 Ali Sianee. All rights reserved. ',
   '  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com  alsisinaiasl@gmail.com',

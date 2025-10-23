@@ -19,7 +19,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Animated web app with smooth transitions and moving text backgrounds">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -30,17 +30,40 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>moving_text_background_new</title>
+  <title>Moving Text Background - Animated Web App</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- 🚀 Performance Optimizations for Hardware Acceleration -->
   <style>
-    body {
+    /* Force hardware acceleration and GPU compositing */
+    html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
       position: fixed;
       width: 100%;
       height: 100%;
+      /* Enable hardware acceleration */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      /* Force GPU rendering */
+      will-change: transform;
+      /* Optimize text rendering for animations */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
+
+    /* Ensure smooth scrolling and animations */
+    * {
+      /* Enable GPU acceleration for all elements */
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      -webkit-perspective: 1000;
+      perspective: 1000;
+    }
+
+    /* Loading screen with smooth animation */
     #loading {
       position: fixed;
       top: 0;
@@ -53,11 +76,70 @@
       justify-content: center;
       color: white;
       font-family: Arial, sans-serif;
+      z-index: 9999;
+      /* Hardware acceleration for loading screen */
+      transform: translateZ(0);
+      will-change: opacity;
+    }
+
+    /* Smooth fade-out animation */
+    #loading.loaded {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    /* Flutter container optimization */
+    flt-glass-pane {
+      /* Force compositing layer for Flutter canvas */
+      transform: translateZ(0);
+      will-change: transform;
     }
   </style>
+
+  <!-- 🎯 Flutter Web Configuration for Maximum Performance -->
+  <script>
+    // Hide loading screen when Flutter is ready (using newer API)
+    window.addEventListener('load', function() {
+      // Remove loading screen after a short delay to ensure Flutter is loaded
+      setTimeout(function() {
+        var loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.classList.add('loaded');
+          setTimeout(function() {
+            loadingElement.remove();
+          }, 500);
+        }
+      }, 1000);
+    });
+
+    // Performance monitoring (development only)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      window.addEventListener('load', function() {
+        if (window.performance && window.performance.timing) {
+          var timing = window.performance.timing;
+          var loadTime = timing.loadEventEnd - timing.navigationStart;
+          console.log('🚀 Page Load Time: ' + loadTime + 'ms');
+          
+          var domReady = timing.domContentLoadedEventEnd - timing.navigationStart;
+          console.log('📄 DOM Ready Time: ' + domReady + 'ms');
+        }
+      });
+    }
+  </script>
 </head>
 <body>
-  <div id="loading">Loading...</div>
+  <div id="loading">
+    <div>
+      <div style="margin-bottom: 20px; font-size: 24px;">⚡</div>
+      <div>Loading Amazing Animations...</div>
+    </div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
