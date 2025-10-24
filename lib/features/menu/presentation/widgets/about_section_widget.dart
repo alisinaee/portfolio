@@ -35,36 +35,13 @@ class _AboutSectionWidgetState extends State<AboutSectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // EMPTY card - just a transparent container
-        Container(
-          width: 300,
-          height: 200,
-          decoration: BoxDecoration(
-            color: Colors.transparent, // Completely transparent
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Color(0xFF404040), width: 1),
-          ),
-          // NO content inside - completely empty
-        ),
-        
-        // Liquid Glass Lens Effect - exactly like the reference
-        BackgroundCaptureWidget(
-          width: 160,
-          height: 160,
-          initialPosition: Offset(100, 50),
-          backgroundKey: widget.backgroundKey,
-          shader: _liquidGlassShader,
-          child: Center(
-            child: Image.asset(
-              'assets/images/photo.png',
-              width: 72,
-              height: 72,
-            ),
-          ),
-        ),
-      ],
+    return BackgroundCaptureWidget(
+      width: 160,
+      height: 160,
+      initialPosition: Offset(100, 50),
+      backgroundKey: widget.backgroundKey,
+      shader: _liquidGlassShader,
+      child: const SizedBox.shrink(),
     );
   }
 }
