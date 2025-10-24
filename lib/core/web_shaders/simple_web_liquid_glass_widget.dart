@@ -155,7 +155,7 @@ class _SimpleWebLiquidGlassWidgetState extends State<SimpleWebLiquidGlassWidget>
     final height = widget.height ?? 200;
     
     debugPrint('🔍 [SimpleWebLiquidGlass] Setting shader uniforms...');
-    debugPrint('🔍 [SimpleWebLiquidGlass] Resolution: ${width}x${height}');
+    debugPrint('🔍 [SimpleWebLiquidGlass] Resolution: ${width}x$height');
     debugPrint('🔍 [SimpleWebLiquidGlass] Mouse: ${_mousePosition.dx}, ${_mousePosition.dy}');
     
     _shader!.setFloat(0, width.toDouble());
@@ -168,7 +168,7 @@ class _SimpleWebLiquidGlassWidgetState extends State<SimpleWebLiquidGlassWidget>
     _shader!.setFloat(7, 0.3); // glassIntensity
     
     debugPrint('🔍 [SimpleWebLiquidGlass] Shader uniforms set successfully');
-    debugPrint('🔍 [SimpleWebLiquidGlass] Creating CustomPaint with size: ${width}x${height}');
+    debugPrint('🔍 [SimpleWebLiquidGlass] Creating CustomPaint with size: ${width}x$height');
     
     return CustomPaint(
       size: Size(width.toDouble(), height.toDouble()),

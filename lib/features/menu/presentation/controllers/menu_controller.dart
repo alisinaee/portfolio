@@ -23,7 +23,7 @@ class AppMenuController extends ChangeNotifier {
   List<MenuEntity> _menuItems = [];
   
   // Hover state management
-  Map<MenuItems, bool> _hoverStates = {};
+  final Map<MenuItems, bool> _hoverStates = {};
   bool _isUpdatingHover = false;
 
   // Getters

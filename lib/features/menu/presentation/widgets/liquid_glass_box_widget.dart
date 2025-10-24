@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/effects/liquid_glass/rounded_liquid_glass_shader.dart';
+import '../../../../core/effects/liquid_glass/liquid_glass_lens_shader.dart'; // Back to original shader
 import '../../../../core/effects/liquid_glass/background_capture_widget.dart';
 
 /// A reusable liquid glass box widget with customizable size and position
@@ -22,16 +22,18 @@ class LiquidGlassBoxWidget extends StatefulWidget {
   });
 
   @override
-  State<LiquidGlassBoxWidget> createState() => _LiquidGlassBoxWidgetState();
+  State<LiquidGlassBoxWidget> createState() => LiquidGlassBoxWidgetState();
 }
 
-class _LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
-  late RoundedLiquidGlassShader _liquidGlassShader;
+// Public state class to allow access from outside
+class LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
+  late LiquidGlassLensShader _liquidGlassShader;
+  final GlobalKey<State<BackgroundCaptureWidget>> _backgroundCaptureKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _liquidGlassShader = RoundedLiquidGlassShader();
+    _liquidGlassShader = LiquidGlassLensShader();
     _initializeShader();
   }
 
@@ -47,16 +49,27 @@ class _LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
     super.dispose();
   }
 
+  // Method to trigger background capture
+  void triggerBackgroundCapture() {
+    final backgroundCaptureState = _backgroundCaptureKey.currentState;
+    if (backgroundCaptureState != null) {
+      (backgroundCaptureState as dynamic).triggerBackgroundCapture();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BackgroundCaptureWidget(
-      width: widget.width,
-      height: widget.height,
-      initialPosition: widget.initialPosition,
-      backgroundKey: widget.backgroundKey,
-      shader: _liquidGlassShader,
-      borderRadius: widget.borderRadius,
-      child: widget.child ?? const SizedBox.shrink(),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(widget.borderRadius),
+      child: BackgroundCaptureWidget(
+        key: _backgroundCaptureKey,
+        width: widget.width,
+        height: widget.height,
+        initialPosition: widget.initialPosition,
+        backgroundKey: widget.backgroundKey,
+        shader: _liquidGlassShader,
+        child: widget.child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }

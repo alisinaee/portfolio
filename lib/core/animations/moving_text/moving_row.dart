@@ -41,7 +41,7 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
   
   bool _isDisposed = false;
   int _buildCount = 0;
-  int _cycleCount = 0;
+  final int _cycleCount = 0;
 
   @override
   void initState() {

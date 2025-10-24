@@ -16,7 +16,6 @@ class BackgroundCaptureWidget extends StatefulWidget {
     this.initialPosition,
     this.captureInterval = const Duration(milliseconds: 8),
     this.backgroundKey,
-    this.borderRadius = 6.0,
   });
 
   final Widget child;
@@ -26,7 +25,6 @@ class BackgroundCaptureWidget extends StatefulWidget {
   final Offset? initialPosition;
   final Duration? captureInterval;
   final GlobalKey? backgroundKey;
-  final double borderRadius;
 
   final BaseShader shader;
 
@@ -73,35 +71,18 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = SizedBox(
+    return SizedBox(
       width: widget.width,
       height: widget.height,
       child: _buildWidgetContent(),
     );
+  }
 
-    return Positioned(
-      left: position.dx,
-      top: position.dy,
-      child: Draggable(
-        feedback: SizedBox.square(),
-        childWhenDragging: child,
-        onDragUpdate: (details) {
-          setState(() {
-            position = position + details.delta;
-          });
-
-          if (!isCapturing) {
-            _captureBackground();
-          }
-        },
-        onDragEnd: (details) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _captureBackground();
-          });
-        },
-        child: child,
-      ),
-    );
+  // Method to trigger background capture from parent
+  void triggerBackgroundCapture() {
+    if (!isCapturing) {
+      _captureBackground();
+    }
   }
 
   Widget _buildWidgetContent() {
@@ -110,7 +91,6 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
         width: widget.width,
         height: widget.height,
         backgroundImage: capturedBackground,
-        borderRadius: widget.borderRadius,
       );
       return CustomPaint(
         size: Size(widget.width, widget.height),

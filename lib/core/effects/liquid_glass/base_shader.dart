@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 class BaseShader {
   BaseShader({
@@ -28,7 +27,7 @@ class BaseShader {
       debugPrint('🔍 [BaseShader] ===== SHADER LOADING START =====');
       debugPrint('🔍 [BaseShader] Shader path: $shaderAssetPath');
       debugPrint('🔍 [BaseShader] Current working directory: ${Uri.base}');
-      debugPrint('🔍 [BaseShader] Is Web: ${kIsWeb}');
+      debugPrint('🔍 [BaseShader] Is Web: $kIsWeb');
       
       if (kIsWeb) {
         // For web, try multiple paths to find the compiled shader

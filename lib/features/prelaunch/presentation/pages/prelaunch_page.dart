@@ -80,7 +80,7 @@ class PrelaunchPage extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return Container(
+    return SizedBox(
       width: 300,
       height: 80,
       child: ElevatedButton(
