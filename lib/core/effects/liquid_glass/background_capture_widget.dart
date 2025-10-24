@@ -149,11 +149,20 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
 
       // 3. Capture the image
       final double pixelRatio = MediaQuery.of(context).devicePixelRatio;
-      final OffsetLayer offsetLayer = boundary.debugLayer! as OffsetLayer;
-      final ui.Image croppedImage = await offsetLayer.toImage(
-        regionToCapture,
-        pixelRatio: pixelRatio,
-      );
+      final OffsetLayer? offsetLayer = boundary.debugLayer as OffsetLayer?;
+      
+      ui.Image croppedImage;
+      
+      if (offsetLayer == null) {
+        debugPrint('Warning: debugLayer is null, using alternative capture method');
+        // Fallback: capture the entire boundary and crop
+        croppedImage = await boundary.toImage(pixelRatio: pixelRatio);
+      } else {
+        croppedImage = await offsetLayer.toImage(
+          regionToCapture,
+          pixelRatio: pixelRatio,
+        );
+      }
 
       // 5. Update state
       if (mounted) {
