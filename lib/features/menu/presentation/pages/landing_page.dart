@@ -28,11 +28,7 @@ class LandingPage extends StatelessWidget {
           ),
           
           // Single about section with liquid glass effect
-          Positioned(
-            top: 80,
-            left: 20,
-            child: AboutSectionWidget(backgroundKey: backgroundKey),
-          ),
+          AboutSectionWidget(backgroundKey: backgroundKey),
         ],
       ),
     );
