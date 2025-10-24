@@ -1,0 +1,59 @@
+import 'package:flutter/material.dart';
+import '../../../../core/effects/liquid_glass/liquid_glass_lens_shader.dart';
+import '../../../../core/effects/liquid_glass/background_capture_widget.dart';
+
+/// A reusable liquid glass box widget with customizable size and position
+class LiquidGlassBoxWidget extends StatefulWidget {
+  final GlobalKey? backgroundKey;
+  final double width;
+  final double height;
+  final Offset initialPosition;
+  final Widget? child;
+  
+  const LiquidGlassBoxWidget({
+    super.key,
+    this.backgroundKey,
+    required this.width,
+    required this.height,
+    required this.initialPosition,
+    this.child,
+  });
+
+  @override
+  State<LiquidGlassBoxWidget> createState() => _LiquidGlassBoxWidgetState();
+}
+
+class _LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
+  late LiquidGlassLensShader _liquidGlassShader;
+
+  @override
+  void initState() {
+    super.initState();
+    _liquidGlassShader = LiquidGlassLensShader();
+    _initializeShader();
+  }
+
+  Future<void> _initializeShader() async {
+    await _liquidGlassShader.initialize();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BackgroundCaptureWidget(
+      width: widget.width,
+      height: widget.height,
+      initialPosition: widget.initialPosition,
+      backgroundKey: widget.backgroundKey,
+      shader: _liquidGlassShader,
+      child: widget.child ?? const SizedBox.shrink(),
+    );
+  }
+}
