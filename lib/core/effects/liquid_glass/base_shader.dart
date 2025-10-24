@@ -83,6 +83,10 @@ class BaseShader {
     required double width,
     required double height,
     required ui.Image? backgroundImage,
+    double? effectSize,
+    double? blurIntensity,
+    double? dispersionStrength,
+    double? borderRadius,
   }) {
     throw UnimplementedError();
   }

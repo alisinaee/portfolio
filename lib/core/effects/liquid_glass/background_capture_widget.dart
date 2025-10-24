@@ -113,6 +113,7 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
         width: widget.width,
         height: widget.height,
         backgroundImage: capturedBackground,
+        borderRadius: widget.borderRadius,
       );
       return CustomPaint(
         size: Size(widget.width, widget.height),
