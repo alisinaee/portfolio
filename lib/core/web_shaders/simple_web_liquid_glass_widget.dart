@@ -28,7 +28,6 @@ class SimpleWebLiquidGlassWidget extends StatefulWidget {
 class _SimpleWebLiquidGlassWidgetState extends State<SimpleWebLiquidGlassWidget> 
     with TickerProviderStateMixin {
   ui.FragmentShader? _shader;
-  bool _isInitialized = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
   Offset _mousePosition = Offset.zero;
@@ -72,9 +71,7 @@ class _SimpleWebLiquidGlassWidgetState extends State<SimpleWebLiquidGlassWidget>
       debugPrint('🔍 [SimpleWebLiquidGlass] Fragment shader created successfully');
       
       if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
+        setState(() {});
         debugPrint('🔍 [SimpleWebLiquidGlass] Shader initialization completed successfully');
       }
     } catch (e) {

@@ -110,9 +110,6 @@ class _LiquidGlassCardState extends State<LiquidGlassCard> {
             width: (widget.width ?? 300) - (widget.padding.horizontal),
             height: (widget.height ?? 200) - (widget.padding.vertical),
             backgroundImage: snapshot.data,
-            effectSize: widget.effectSize,
-            blurIntensity: widget.blurIntensity,
-            dispersionStrength: widget.dispersionStrength,
           );
           
           return CustomPaint(

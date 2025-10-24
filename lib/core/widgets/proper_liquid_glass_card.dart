@@ -192,9 +192,6 @@ class _ProperLiquidGlassCardState extends State<ProperLiquidGlassCard> with Tick
           width: (widget.width ?? 300) - (widget.padding.horizontal),
           height: (widget.height ?? 200) - (widget.padding.vertical),
           backgroundImage: _capturedBackground!,
-          effectSize: widget.effectSize,
-          blurIntensity: widget.blurIntensity,
-          dispersionStrength: widget.dispersionStrength,
         );
         
         return CustomPaint(
