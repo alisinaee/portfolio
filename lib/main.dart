@@ -9,7 +9,7 @@ import 'firebase_options.dart';
 import 'features/menu/data/data_sources/menu_data_source.dart';
 import 'features/menu/data/repositories/menu_repository_impl.dart';
 import 'features/menu/presentation/controllers/menu_controller.dart';
-import 'features/prelaunch/presentation/pages/prelaunch_page.dart';
+import 'features/menu/presentation/pages/landing_page.dart';
 import 'core/utils/memory_manager.dart';
 
 void main() async {
@@ -69,7 +69,7 @@ class MovingTextBackgroundApp extends StatelessWidget {
         // Wrap with PerformanceMonitor for monitoring
         // Set showOverlay to true to enable performance monitoring
         // NOTE: Disable in production for better performance!
-        home: PrelaunchPage(),
+        home: const LandingPage(),
       ),
     );
   }
