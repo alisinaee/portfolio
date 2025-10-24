@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Performance logging utility for tracking animation performance
 /// Set kDebugPerformance to true to enable logging
-const bool kDebugPerformance = false; // ✅ Disabled to reduce console noise
+const bool kDebugPerformance = true; // ✅ Enable to collect optimization logs
 
 class PerformanceLogger {
   static final Map<String, _PerformanceMetrics> _metrics = {};
   static final Map<String, int> _buildCounts = {};
   static final Map<String, DateTime> _lastLog = {};
+  static _JankMonitor? _jankMonitor;
   
   static const int _maxMetricsSize = 100; // Limit stored metrics to prevent memory buildup
   
@@ -101,6 +102,8 @@ class PerformanceLogger {
     _metrics.clear();
     _buildCounts.clear();
     _lastLog.clear();
+    _jankMonitor?.dispose();
+    _jankMonitor = null;
   }
   
   /// Clean old metrics to prevent memory buildup
@@ -132,6 +135,17 @@ class PerformanceLogger {
     }
     
     debugPrint('╚════════════════════════════════════════════════════════════╝\n');
+    if (_jankMonitor != null) {
+      final stats = _jankMonitor!;
+      debugPrint('FPS: ${stats.currentFps.toStringAsFixed(1)} | Jank>16.7ms: ${stats.jankCount} | worst: ${stats.worstFrameMs.toStringAsFixed(2)}ms');
+    }
+  }
+
+  /// Public API to start the jank monitor (works on web via sampling)
+  static void startJankMonitor() {
+    if (!kDebugPerformance) return;
+    _jankMonitor ??= _JankMonitor();
+    _jankMonitor!.start();
   }
   
   static void _log(String widgetName, String message, LogLevel level) {
@@ -173,6 +187,45 @@ class _PerformanceMetrics {
     required this.widgetName,
     required this.startTime,
   });
+}
+
+/// Lightweight jank monitor that works on web by sampling frame intervals
+class _JankMonitor {
+  bool _running = false;
+  int _frames = 0;
+  int jankCount = 0;
+  double worstFrameMs = 0;
+  double currentFps = 0;
+  DateTime? _lastStamp;
+
+  void start() {
+    if (_running) return;
+    _running = true;
+    _tick();
+  }
+
+  void _tick() {
+    if (!_running) return;
+    final now = DateTime.now();
+    if (_lastStamp != null) {
+      final delta = now.difference(_lastStamp!).inMicroseconds / 1000.0;
+      _frames++;
+      if (delta > 16.7) {
+        jankCount++;
+        if (delta > worstFrameMs) worstFrameMs = delta;
+      }
+      // Recompute FPS every 30 frames
+      if (_frames % 30 == 0) {
+        currentFps = 1000.0 / delta;
+      }
+    }
+    _lastStamp = now;
+    WidgetsBinding.instance.scheduleFrameCallback((_) => _tick());
+  }
+
+  void dispose() {
+    _running = false;
+  }
 }
 
 /// Mixin to add performance tracking to StatefulWidgets

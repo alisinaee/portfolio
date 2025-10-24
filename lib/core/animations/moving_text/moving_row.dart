@@ -15,6 +15,7 @@ class MovingRow extends StatefulWidget {
   final bool isMenuOpen;
   final Widget childMenu;
   final Widget childBackground;
+  final Animation<double>? sharedAnimation;
 
   const MovingRow({
     super.key,
@@ -23,6 +24,7 @@ class MovingRow extends StatefulWidget {
     required this.childBackground,
     required this.isMenuOpen,
     this.reverse = false,
+    this.sharedAnimation,
   });
 
   @override
@@ -35,6 +37,7 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
   late final String _performanceId;
   late AnimationController _controller;
   late Animation<double> _animation;
+  bool _ownsController = false;
   
   bool _isDisposed = false;
   int _buildCount = 0;
@@ -53,74 +56,46 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
     
     // Create widget lists once (immutable for better performance)
     menuList = List.generate(5, (index) => widget.childMenu, growable: false);
+    // Use multiple background units to ensure coverage and avoid edge gaps
     backgroundList = List.generate(3, (index) => widget.childBackground, growable: false);
     
-    // Initialize AnimationController with Ticker (frame-perfect timing)
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3), // Animation duration
-    );
-    
-    // Create animation with easing curve
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-    
-    // Listen to animation status for automatic looping
-    _controller.addStatusListener(_handleAnimationStatus);
+    // Initialize Animation
+    if (widget.sharedAnimation != null) {
+      _animation = widget.sharedAnimation!;
+      _ownsController = false;
+    } else {
+      _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 30),
+      );
+      _animation = CurvedAnimation(
+        parent: _controller,
+        curve: Curves.linear,
+      );
+      _ownsController = true;
+    }
     
     PerformanceLogger.logAnimation(_performanceId, 'Controller initialized', data: {
       'menuCount': menuList.length,
       'backgroundCount': backgroundList.length,
     });
     
-    // Start animation after initial delay
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(Duration(seconds: widget.delaySec)).then((_) {
-        if (mounted && !_isDisposed) {
-          PerformanceLogger.logAnimation(_performanceId, 'Starting animation loop');
-          _startAnimationCycle();
-        }
-      });
-    });
-  }
-
-  void _handleAnimationStatus(AnimationStatus status) {
-    if (!mounted || _isDisposed) return;
-    
-    if (status == AnimationStatus.completed) {
-      // Animation forward completed, wait then reverse
-      _cycleCount++;
-      PerformanceLogger.logAnimation(_performanceId, 'Forward complete', data: {
-        'cycle': _cycleCount,
-      });
-      
-      Future.delayed(const Duration(seconds: 5)).then((_) {
-        if (mounted && !_isDisposed) {
-          _controller.reverse();
-        }
-      });
-    } else if (status == AnimationStatus.dismissed) {
-      // Animation reverse completed, wait then forward
-      PerformanceLogger.logAnimation(_performanceId, 'Reverse complete', data: {
-        'cycle': _cycleCount,
-      });
-      
-      Future.delayed(const Duration(seconds: 5)).then((_) {
-        if (mounted && !_isDisposed) {
-          _controller.forward();
-        }
+    // Start animation after initial delay (only if we own the controller)
+    if (_ownsController) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(Duration(seconds: widget.delaySec)).then((_) {
+          if (mounted && !_isDisposed) {
+            PerformanceLogger.logAnimation(_performanceId, 'Starting animation loop');
+            _startAnimationCycle();
+          }
+        });
       });
     }
   }
 
   void _startAnimationCycle() {
-    if (widget.reverse) {
-      _controller.value = 1.0;
-      _controller.reverse();
-    } else {
-      _controller.forward();
+    if (_ownsController) {
+      _controller.repeat(reverse: true);
     }
   }
 
@@ -132,8 +107,9 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
     });
     
     _isDisposed = true;
-    _controller.removeStatusListener(_handleAnimationStatus);
-    _controller.dispose();
+    if (_ownsController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
@@ -183,31 +159,39 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
       key: Key(key),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Calculate max translation distance (20% of width)
-          final maxTranslation = constraints.maxWidth / 5;
+          // Smaller amplitude to avoid revealing gaps at edges
+          final amplitude = constraints.maxWidth * 0.05;
           
           // Use AnimatedBuilder to only rebuild the Transform widget
           return AnimatedBuilder(
             animation: _animation,
             builder: (context, child) {
-              // Calculate current translation based on animation value
-              final translation = widget.reverse 
-                  ? maxTranslation * (1 - _animation.value)
-                  : maxTranslation * _animation.value;
+              // Map 0..1..0 to symmetric range [-amplitude, +amplitude]
+              final t = _animation.value; // 0..1..0 with reverse:true
+              final centered = (t - 0.5) * 2.0; // -1..0..+1
+              final directionSign = widget.reverse ? -1.0 : 1.0; // flip for group B
+              final dx = directionSign * amplitude * centered;
               
               // Transform.translate is GPU-accelerated (no layout recalculation!)
               return Transform.translate(
-                offset: Offset(translation, 0),
+                offset: Offset(dx, 0),
                 child: child,
               );
             },
             // Child is not rebuilt, only the Transform changes
             child: RepaintBoundary(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const NeverScrollableScrollPhysics(),
-                child: Row(
-                  children: children,
+              child: ClipRect(
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  child: OverflowBox(
+                    alignment: Alignment.centerLeft,
+                    minWidth: 0,
+                    maxWidth: double.infinity,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: children,
+                    ),
+                  ),
                 ),
               ),
             ),

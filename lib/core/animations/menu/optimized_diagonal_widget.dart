@@ -93,7 +93,7 @@ class DiagonalBackgroundPainter extends CustomPainter {
 
   void _drawPlaceholderTexts(Canvas canvas, Size size) {
     final textStyle = ui.TextStyle(
-      color: Colors.white54,
+      color: const Color(0xFF262626),
       fontSize: 12,
     );
 
@@ -157,7 +157,7 @@ class DiagonalBackgroundPainter extends CustomPainter {
     ];
 
     final textStyle = ui.TextStyle(
-      color: Colors.white24,
+      color: const Color(0xFF262626),
       fontSize: 10,
     );
 

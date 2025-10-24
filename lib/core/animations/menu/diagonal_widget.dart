@@ -162,16 +162,16 @@ class _PassiveItem extends StatelessWidget {
   // Const border decoration to avoid recreation
   static const BoxDecoration _decoration = BoxDecoration(
     border: Border(
-      top: BorderSide(color: Colors.white54, width: 0.5),
-      bottom: BorderSide(color: Colors.white54, width: 0.5),
-      left: BorderSide(color: Colors.white54, width: 0.5),
-      right: BorderSide(color: Colors.white54, width: 0.5),
+      top: BorderSide(color: Color(0xFF404040), width: 0.5),
+      bottom: BorderSide(color: Color(0xFF404040), width: 0.5),
+      left: BorderSide(color: Color(0xFF404040), width: 0.5),
+      right: BorderSide(color: Color(0xFF404040), width: 0.5),
     ),
   );
 
   // Const text style to avoid recreation
   static const TextStyle _textStyle = TextStyle(
-    color: Colors.white54,
+    color: Color(0xFF262626),
     overflow: TextOverflow.ellipsis,
   );
 

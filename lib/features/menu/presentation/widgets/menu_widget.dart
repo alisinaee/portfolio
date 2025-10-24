@@ -5,21 +5,40 @@ import '../../domain/entities/menu_entity.dart';
 import 'menu_item_widget.dart';
 import '../../../../core/animations/menu/diagonal_widget.dart';
 
-/// Optimized MenuWidget with Selector for granular rebuilds
+/// Optimized BackgroundAnimationWidget with Selector for granular rebuilds
 /// 
 /// Performance Improvements:
 /// - Uses Selector instead of Consumer (only rebuilds when menuState/items change)
 /// - Isolated menu item hover events (doesn't trigger full menu rebuild)
 /// - RepaintBoundary for separators
 /// - Const widgets where possible
-class MenuWidget extends StatefulWidget {
-  const MenuWidget({super.key});
+class BackgroundAnimationWidget extends StatefulWidget {
+  const BackgroundAnimationWidget({super.key});
 
   @override
-  State<MenuWidget> createState() => _MenuWidgetState();
+  State<BackgroundAnimationWidget> createState() => _BackgroundAnimationWidgetState();
 }
 
-class _MenuWidgetState extends State<MenuWidget> {
+class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> with TickerProviderStateMixin {
+  late final AnimationController _controller; // shared clock
+  late final Animation<double> _animA; // direct
+  late final Animation<double> _animB; // reverse of A
+
+  @override
+  void initState() {
+    super.initState();
+    // One clock; B is exact reverse of A → always opposite direction
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 45));
+    _animA = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _animB = ReverseAnimation(_animA);
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
   Tween<double> _tweenManager({
     required MenuState menuState,
     required double flex,
@@ -50,12 +69,18 @@ class _MenuWidgetState extends State<MenuWidget> {
         
         return DiagonalWidget(
           child: Column(
-            children: data.items.map((menuItem) {
+            children: data.items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final menuItem = entry.value;
+              final isGroupB = index % 2 == 1; // 0,2,4 -> group A; 1,3 -> group B
+              final shared = isGroupB ? _animB : _animA;
               return _MenuItem(
                 key: ValueKey(menuItem.id),
                 menuItem: menuItem,
                 isMenuOpen: isMenuOpen,
                 tweenManager: _tweenManager,
+                sharedAnimation: shared,
+                groupReverse: isGroupB, // make groups move in opposite directions
               );
             }).toList(),
           ),
@@ -74,12 +99,16 @@ class _MenuItem extends StatelessWidget {
     required double flex,
     required bool isOnHover,
   }) tweenManager;
+  final Animation<double> sharedAnimation;
+  final bool groupReverse;
 
   const _MenuItem({
     super.key,
     required this.menuItem,
     required this.isMenuOpen,
     required this.tweenManager,
+    required this.sharedAnimation,
+    required this.groupReverse,
   });
 
   @override
@@ -136,6 +165,8 @@ class _MenuItem extends StatelessWidget {
                         menuItem: menuItem,
                         isSelected: data.isSelected,
                         isMenuOpen: isMenuOpen,
+                        sharedAnimation: sharedAnimation,
+                        groupReverse: groupReverse,
                       ),
                     ),
                   ),

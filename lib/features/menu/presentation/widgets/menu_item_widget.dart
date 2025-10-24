@@ -10,12 +10,16 @@ class MenuItemWidget extends StatelessWidget {
   final MenuEntity menuItem;
   final bool isSelected;
   final bool isMenuOpen;
+  final Animation<double> sharedAnimation;
+  final bool groupReverse;
 
   const MenuItemWidget({
     super.key,
     required this.menuItem,
     required this.isSelected,
     required this.isMenuOpen,
+    required this.sharedAnimation,
+    required this.groupReverse,
   });
 
   @override
@@ -24,8 +28,9 @@ class MenuItemWidget extends StatelessWidget {
       id: menuItem.id,
       child: MovingRow(
         delaySec: menuItem.delaySec,
-        reverse: menuItem.reverse,
+        reverse: groupReverse ? !menuItem.reverse : menuItem.reverse,
         isMenuOpen: isMenuOpen,
+        sharedAnimation: sharedAnimation,
         childBackground: _buildBackground(),
         childMenu: _buildMenu(context),
       ),
@@ -129,8 +134,8 @@ class MenuItemWidget extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 500,
                   fontFamily: 'Ganyme',
-                  // Use const color with opacity instead of withOpacity()
-                  color: Color.fromRGBO(255, 255, 255, 0.15),
+                  // Use solid color for better performance
+                  color: Color(0xFF262626),
                 ),
               ),
             ),

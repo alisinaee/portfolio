@@ -31,7 +31,7 @@ MovingRow (Background Animation):
   After:  Transform.translate (GPU-accelerated, 2ms/frame)
   Result: 6x FASTER ⚡
 
-MenuWidget (Menu State):
+BackgroundAnimationWidget (Menu State):
   Before: Consumer (300+ rebuilds on menu open)
   After:  Selector (10 rebuilds on menu open)
   Result: 97% FEWER REBUILDS 🚀
@@ -65,7 +65,7 @@ Web Configuration:
 ✅ Reduced performance logging
 ```
 
-### 2️⃣ **MenuWidget** - Menu Animations
+### 2️⃣ **BackgroundAnimationWidget** - Menu Animations
 ```dart
 ✅ Selector pattern (granular updates)
 ✅ Isolated menu items (no full rebuilds)

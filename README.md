@@ -207,7 +207,7 @@ Enable performance overlay in `lib/main.dart`:
 ```dart
 home: const PerformanceMonitor(
   showOverlay: true,  // Enable FPS counter
-  child: MenuPage(),
+  child: LandingPage(),
 ),
 ```
 

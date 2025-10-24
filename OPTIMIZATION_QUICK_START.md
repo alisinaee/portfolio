@@ -88,7 +88,7 @@ flutter run -d chrome --web-renderer canvaskit
 1. `lib/core/animations/moving_text/moving_row.dart` - Complete rewrite
 2. `lib/core/animations/menu/diagonal_widget.dart` - Enhanced caching
 3. `lib/core/animations/menu/flip_animation.dart` - Optimized performance
-4. `lib/features/menu/presentation/widgets/menu_widget.dart` - Selector pattern
+4. `lib/features/menu/presentation/widgets/background_animation_widget.dart` - Selector pattern
 5. `lib/features/menu/presentation/controllers/menu_controller.dart` - Smart state
 6. `web/index.html` - Hardware acceleration
 
