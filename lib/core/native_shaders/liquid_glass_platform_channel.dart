@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Platform channel interface for native liquid glass shaders
@@ -11,7 +12,7 @@ class LiquidGlassPlatformChannel {
       final bool result = await _channel.invokeMethod('initialize');
       return result;
     } catch (e) {
-      print('Error initializing native shader: $e');
+      debugPrint('Error initializing native shader: $e');
       return false;
     }
   }
@@ -57,7 +58,7 @@ class LiquidGlassPlatformChannel {
       
       return null;
     } catch (e) {
-      print('Error applying liquid glass effect: $e');
+      debugPrint('Error applying liquid glass effect: $e');
       return null;
     }
   }
@@ -81,7 +82,7 @@ class LiquidGlassPlatformChannel {
       });
       return result;
     } catch (e) {
-      print('Error applying full screen liquid glass: $e');
+      debugPrint('Error applying full screen liquid glass: $e');
       return false;
     }
   }
@@ -105,7 +106,7 @@ class LiquidGlassPlatformChannel {
       });
       return result;
     } catch (e) {
-      print('Error updating liquid glass parameters: $e');
+      debugPrint('Error updating liquid glass parameters: $e');
       return false;
     }
   }
@@ -116,7 +117,7 @@ class LiquidGlassPlatformChannel {
       final bool result = await _channel.invokeMethod('startRealTimeEffect');
       return result;
     } catch (e) {
-      print('Error starting real-time effect: $e');
+      debugPrint('Error starting real-time effect: $e');
       return false;
     }
   }
@@ -127,7 +128,7 @@ class LiquidGlassPlatformChannel {
       final bool result = await _channel.invokeMethod('stopRealTimeEffect');
       return result;
     } catch (e) {
-      print('Error stopping real-time effect: $e');
+      debugPrint('Error stopping real-time effect: $e');
       return false;
     }
   }
@@ -138,7 +139,7 @@ class LiquidGlassPlatformChannel {
       final bool result = await _channel.invokeMethod('dispose');
       return result;
     } catch (e) {
-      print('Error disposing native resources: $e');
+      debugPrint('Error disposing native resources: $e');
       return false;
     }
   }
