@@ -12,6 +12,10 @@ class LiquidGlassLensShader extends BaseShader {
     required double width,
     required double height,
     required ui.Image? backgroundImage,
+    double? effectSize,
+    double? blurIntensity,
+    double? dispersionStrength,
+    double? borderRadius,
   }) {
     if (!isLoaded) return;
 
@@ -24,13 +28,13 @@ class LiquidGlassLensShader extends BaseShader {
     shader.setFloat(3, height / 2);
 
     // Set effect size (index 4)
-    shader.setFloat(4, 5.0);
+    shader.setFloat(4, effectSize ?? 5.0);
 
     // Set blur intensity (index 5)
-    shader.setFloat(5, 0);
+    shader.setFloat(5, blurIntensity ?? 0);
 
     // Set dispersion strength (index 6)
-    shader.setFloat(6, 0.4);
+    shader.setFloat(6, dispersionStrength ?? 0.4);
 
     // Set background texture (sampler index 0)
     if (backgroundImage != null &&
