@@ -76,10 +76,7 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
     final Widget child = SizedBox(
       width: widget.width,
       height: widget.height,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        child: _buildWidgetContent(),
-      ),
+      child: _buildWidgetContent(),
     );
 
     return Positioned(

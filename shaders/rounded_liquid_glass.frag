@@ -3,10 +3,10 @@
 // Uniforms from Flutter (matching original shader layout)
 uniform vec2 uResolution;
 uniform vec2 uMouse;
-uniform float uEffectSize; // Controls the size of the lens effect (0.1 to 2.0 recommended)
-uniform float uBlurIntensity; // Controls the blur strength (0.0 = no blur, 2.0 = heavy blur)
-uniform float uDispersionStrength; // Add chromatic dispersion control
-uniform float uBorderRadius; // Border radius for rounded rectangles
+uniform float uEffectSize;
+uniform float uBlurIntensity;
+uniform float uDispersionStrength;
+uniform float uBorderRadius;
 uniform sampler2D uTexture;
 
 // Output
@@ -18,16 +18,6 @@ float roundedBoxSDF(vec2 p, vec2 b, float r) {
     return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 
-// Function to create smooth rounded rectangle mask
-float roundedBoxMask(vec2 uv, vec2 size, float radius) {
-    vec2 center = vec2(0.5, 0.5);
-    vec2 p = (uv - center) * 2.0; // Convert to [-1, 1] range
-    vec2 boxSize = size * 0.5; // Half size for distance calculation
-    
-    float distance = roundedBoxSDF(p, boxSize, radius);
-    return 1.0 - smoothstep(0.0, 0.02, distance);
-}
-
 void main() {
     // Get fragment coordinates
     vec2 fragCoord = FlutterFragCoord();
@@ -35,33 +25,55 @@ void main() {
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / uResolution.xy;
     
-    // Calculate box dimensions and border radius
-    vec2 boxSize = vec2(1.0, 1.0); // Full size by default
-    float radius = uBorderRadius / min(uResolution.x, uResolution.y); // Normalize radius
+    // Calculate center of the widget in normalized coordinates
+    vec2 center = vec2(0.5, 0.5);
     
-    // Create rounded rectangle mask
-    float mask = roundedBoxMask(uv, boxSize, radius);
+    // Calculate half size of the widget in normalized coordinates
+    vec2 halfSize = vec2(uResolution.x / uResolution.y, 1.0) * 0.5;
+    vec2 boxSize = halfSize - vec2(uBorderRadius / uResolution.x, uBorderRadius / uResolution.y);
     
-    // Only apply liquid glass effect inside the rounded rectangle
-    if (mask > 0.0) {
-        // Calculate distance from center for distortion
-        vec2 center = vec2(0.5, 0.5);
-        vec2 m2 = (uv - center);
-        float dist = length(m2);
+    // Position relative to the center of the widget
+    vec2 p = uv - center;
+    
+    // Scale p to match aspect ratio for consistent rounding
+    p.x *= uResolution.x / uResolution.y;
+    
+    // Calculate distance from the rounded box
+    float dist = roundedBoxSDF(p, boxSize, uBorderRadius / uResolution.y);
+    
+    // Create a mask for the rounded box with smooth edges
+    float roundedBoxMask = smoothstep(0.0, fwidth(dist), -dist);
+    
+    // Only apply effect inside the rounded box
+    if (roundedBoxMask > 0.0) {
+        // Calculate distance from mouse/center for lens effect
+        vec2 mousePos = uMouse.xy / uResolution.xy;
+        vec2 m2 = (uv - mousePos);
         
-        // Create lens distortion effect
+        // Create lens effect with size control
         float effectRadius = uEffectSize * 0.5;
-        float distortionStrength = 50.0 * (1.0 / (effectRadius * effectRadius));
+        float sizeMultiplier = 1.0 / (effectRadius * effectRadius);
+        float roundedBoxEffect = pow(abs(m2.x * uResolution.x / uResolution.y), 4.0) +
+                                 pow(abs(m2.y), 4.0);
         
-        // Apply distortion only within the rounded rectangle
-        vec2 lens = ((uv - center) * (1.0 - dist * distortionStrength * mask) + center);
+        // Calculate different zones of the effect
+        float baseIntensity = 100.0 * sizeMultiplier;
+        float rb1 = clamp((1.0 - roundedBoxEffect * baseIntensity) * 8.0, 0.0, 1.0);
+        float rb2 = clamp((0.95 - roundedBoxEffect * baseIntensity * 0.95) * 16.0, 0.0, 1.0) -
+                     clamp(pow(0.9 - roundedBoxEffect * baseIntensity * 0.95, 1.0) * 16.0, 0.0, 1.0);
+        float rb3 = clamp((1.5 - roundedBoxEffect * baseIntensity * 1.1) * 2.0, 0.0, 1.0) -
+                     clamp(pow(1.0 - roundedBoxEffect * baseIntensity * 1.1, 1.0) * 2.0, 0.0, 1.0);
+        
+        // Lens distortion effect
+        float distortionStrength = 50.0 * sizeMultiplier;
+        vec2 lens = ((uv - 0.5) * (1.0 - roundedBoxEffect * distortionStrength) + 0.5);
         
         // Enhanced chromatic dispersion calculation
         vec2 dir = normalize(m2);
         float dispersionScale = uDispersionStrength * 0.05;
         
         // Create edge mask based on distance from center
-        float dispersionMask = smoothstep(0.3, 0.7, dist * 4.0) * mask;
+        float dispersionMask = smoothstep(0.3, 0.7, roundedBoxEffect * baseIntensity);
         
         // Apply mask to dispersion offsets
         vec2 redOffset = dir * dispersionScale * 2.0 * dispersionMask;
@@ -95,18 +107,21 @@ void main() {
         
         // Add lighting effects
         float gradient = clamp((clamp(m2.y, 0.0, 0.2) + 0.1) / 2.0, 0.0, 1.0) +
-                        clamp((clamp(-m2.y, -1000.0, 0.2) + 0.1) / 2.0, 0.0, 1.0);
+                         clamp((clamp(-m2.y, -1000.0, 0.2) * rb3 + 0.1) / 2.0, 0.0, 1.0);
         
-        // Combine all effects with mask
+        // Combine all effects
         fragColor = mix(
             texture(uTexture, uv),
             colorResult,
-            mask
+            rb1
         );
-        fragColor = clamp(fragColor + vec4(mask * 0.3) + vec4(gradient * 0.2 * mask), 0.0, 1.0);
+        fragColor = clamp(fragColor + vec4(rb2 * 0.3) + vec4(gradient * 0.2), 0.0, 1.0);
+        
+        // Apply the rounded box mask to the final color
+        fragColor *= roundedBoxMask;
         
     } else {
-        // Outside the rounded rectangle, show original texture
+        // Outside the rounded box, just sample the background texture
         fragColor = texture(uTexture, uv);
     }
 }

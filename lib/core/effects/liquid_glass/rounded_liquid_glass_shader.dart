@@ -32,25 +32,27 @@ class RoundedLiquidGlassShader extends BaseShader {
     if (!isLoaded) return;
 
     try {
-      // Set resolution
-      shader.setFloat(_uResolutionIndex, width);
-      shader.setFloat(_uResolutionIndex + 1, height);
-      
-      // Set mouse position (center of the widget)
-      shader.setFloat(_uMouseIndex, width / 2.0);
-      shader.setFloat(_uMouseIndex + 1, height / 2.0);
-      
-      // Set effect parameters
-      shader.setFloat(_uEffectSizeIndex, effectSize ?? 1.0);
-      shader.setFloat(_uBlurIntensityIndex, blurIntensity ?? 0.5);
-      shader.setFloat(_uDispersionStrengthIndex, dispersionStrength ?? 0.1);
-      shader.setFloat(_uBorderRadiusIndex, borderRadius ?? 6.0);
-      
-      // Set background texture
-      if (backgroundImage != null) {
-        shader.setImageSampler(_uTextureIndex, backgroundImage);
+      // Set resolution (indices 0-1)
+      shader.setFloat(0, width);
+      shader.setFloat(1, height);
+
+      // Set mouse position (indices 2-3)
+      shader.setFloat(2, width / 2.0);
+      shader.setFloat(3, height / 2.0);
+
+      // Set effect parameters (indices 4-6)
+      shader.setFloat(4, effectSize ?? 5.0);
+      shader.setFloat(5, blurIntensity ?? 0);
+      shader.setFloat(6, dispersionStrength ?? 0.4);
+
+      // Set border radius (index 7 - new uniform)
+      shader.setFloat(7, borderRadius ?? 6.0);
+
+      // Set background texture (sampler index 0)
+      if (backgroundImage != null && backgroundImage.width > 0 && backgroundImage.height > 0) {
+        shader.setImageSampler(0, backgroundImage);
       }
-      
+
       debugPrint('🔍 [RoundedLiquidGlassShader] Uniforms updated - size: ${width}x${height}, borderRadius: ${borderRadius ?? 6.0}');
     } catch (e) {
       debugPrint('❌ [RoundedLiquidGlassShader] Error updating uniforms: $e');
