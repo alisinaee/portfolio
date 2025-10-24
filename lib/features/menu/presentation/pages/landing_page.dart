@@ -121,6 +121,121 @@ class LandingPage extends StatelessWidget {
               ),
             ),
           ),
+          
+          // Rounded examples with different border radius
+          // Small rounded (80x80, radius 20)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 80,
+            height: 80,
+            initialPosition: Offset(400, 100),
+            borderRadius: 20.0,
+            child: const Center(
+              child: Text(
+                'R20',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          // Medium rounded (100x100, radius 40)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 100,
+            height: 100,
+            initialPosition: Offset(500, 200),
+            borderRadius: 40.0,
+            child: const Center(
+              child: Text(
+                'R40',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          // Large rounded (120x120, radius 60)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 120,
+            height: 120,
+            initialPosition: Offset(300, 400),
+            borderRadius: 60.0,
+            child: const Center(
+              child: Text(
+                'R60',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          // Very rounded (100x100, radius 50 - almost circle)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 100,
+            height: 100,
+            initialPosition: Offset(150, 500),
+            borderRadius: 50.0,
+            child: const Center(
+              child: Text(
+                'R50',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          // Pill shape (200x80, radius 40)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 200,
+            height: 80,
+            initialPosition: Offset(400, 500),
+            borderRadius: 40.0,
+            child: const Center(
+              child: Text(
+                'Pill',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          // Square with small radius (120x120, radius 10)
+          LiquidGlassBoxWidget(
+            backgroundKey: backgroundKey,
+            width: 120,
+            height: 120,
+            initialPosition: Offset(600, 300),
+            borderRadius: 10.0,
+            child: const Center(
+              child: Text(
+                'R10',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

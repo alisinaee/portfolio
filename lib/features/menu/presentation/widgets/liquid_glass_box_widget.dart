@@ -8,6 +8,7 @@ class LiquidGlassBoxWidget extends StatefulWidget {
   final double width;
   final double height;
   final Offset initialPosition;
+  final double borderRadius;
   final Widget? child;
   
   const LiquidGlassBoxWidget({
@@ -16,6 +17,7 @@ class LiquidGlassBoxWidget extends StatefulWidget {
     required this.width,
     required this.height,
     required this.initialPosition,
+    this.borderRadius = 6.0,
     this.child,
   });
 
@@ -53,6 +55,7 @@ class _LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
       initialPosition: widget.initialPosition,
       backgroundKey: widget.backgroundKey,
       shader: _liquidGlassShader,
+      borderRadius: widget.borderRadius,
       child: widget.child ?? const SizedBox.shrink(),
     );
   }

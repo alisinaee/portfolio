@@ -16,6 +16,7 @@ class BackgroundCaptureWidget extends StatefulWidget {
     this.initialPosition,
     this.captureInterval = const Duration(milliseconds: 8),
     this.backgroundKey,
+    this.borderRadius = 6.0,
   });
 
   final Widget child;
@@ -25,6 +26,7 @@ class BackgroundCaptureWidget extends StatefulWidget {
   final Offset? initialPosition;
   final Duration? captureInterval;
   final GlobalKey? backgroundKey;
+  final double borderRadius;
 
   final BaseShader shader;
 
@@ -75,7 +77,7 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
       width: widget.width,
       height: widget.height,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(widget.borderRadius),
         child: _buildWidgetContent(),
       ),
     );

@@ -12,6 +12,7 @@ This guide explains how to create liquid glass boxes of different sizes in the F
 - `backgroundKey`: GlobalKey - Reference to the background for capture
 
 ### Optional Parameters
+- `borderRadius`: Double - Border radius for rounded corners (default: 6.0)
 - `child`: Widget - Content to display inside the liquid glass box
 - `key`: Key - Widget key for identification
 
@@ -139,14 +140,94 @@ LiquidGlassBoxWidget(
 - More boxes = more background capture operations
 - Consider limiting to 5-10 boxes maximum for smooth performance
 
+## Border Radius Examples
+
+### Small Radius (R10)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 120,
+  height: 120,
+  initialPosition: Offset(600, 300),
+  borderRadius: 10.0,
+  child: const Center(child: Text('R10')),
+)
+```
+
+### Medium Radius (R20)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 80,
+  height: 80,
+  initialPosition: Offset(400, 100),
+  borderRadius: 20.0,
+  child: const Center(child: Text('R20')),
+)
+```
+
+### Large Radius (R40)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 100,
+  height: 100,
+  initialPosition: Offset(500, 200),
+  borderRadius: 40.0,
+  child: const Center(child: Text('R40')),
+)
+```
+
+### Very Large Radius (R50 - Almost Circle)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 100,
+  height: 100,
+  initialPosition: Offset(150, 500),
+  borderRadius: 50.0,
+  child: const Center(child: Text('R50')),
+)
+```
+
+### Extra Large Radius (R60)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 120,
+  height: 120,
+  initialPosition: Offset(300, 400),
+  borderRadius: 60.0,
+  child: const Center(child: Text('R60')),
+)
+```
+
+### Pill Shape (200x80, R40)
+```dart
+LiquidGlassBoxWidget(
+  backgroundKey: backgroundKey,
+  width: 200,
+  height: 80,
+  initialPosition: Offset(400, 500),
+  borderRadius: 40.0,
+  child: const Center(child: Text('Pill')),
+)
+```
+
 ## Implementation in Landing Page
 
-The landing page now includes examples of all different sizes:
+The landing page now includes examples of all different sizes and border radius values:
 - Original 160x160 box (AboutSectionWidget)
 - Tiny 60x60 box
 - Small 80x80 box  
 - Medium 120x120 box
 - Large 200x200 box
 - Extra Large 300x150 box
+- **R10**: 120x120 with small radius
+- **R20**: 80x80 with medium radius
+- **R40**: 100x100 with large radius
+- **R50**: 100x100 almost circular
+- **R60**: 120x120 extra large radius
+- **Pill**: 200x80 pill shape
 
-Each box is positioned at different locations and includes descriptive text labels.
+Each box is positioned at different locations and includes descriptive text labels showing the border radius value.
