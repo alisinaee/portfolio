@@ -33,9 +33,9 @@ class BaseShader {
       if (kIsWeb) {
         // For web, try multiple paths to find the compiled shader
         final webPaths = [
-          'assets/shaders/liquid_glass_lens.frag',
-          'packages/moving_text_background_new/shaders/liquid_glass_lens.frag',
-          'shaders/liquid_glass_lens.frag',
+          'assets/$shaderAssetPath',
+          'packages/moving_text_background_new/$shaderAssetPath',
+          shaderAssetPath,
         ];
         
         ui.FragmentProgram? program;

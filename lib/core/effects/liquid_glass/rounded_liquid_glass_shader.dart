@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'base_shader.dart';
 
 class RoundedLiquidGlassShader extends BaseShader {
-  // Shader uniforms
+  // Shader uniforms (matching original shader layout)
   static const int _uResolutionIndex = 0;
-  static const int _uMouseIndex = 1;
-  static const int _uEffectSizeIndex = 2;
-  static const int _uBlurIntensityIndex = 3;
-  static const int _uDispersionStrengthIndex = 4;
-  static const int _uBorderRadiusIndex = 5;
-  static const int _uTextureIndex = 6;
+  static const int _uMouseIndex = 2;
+  static const int _uEffectSizeIndex = 4;
+  static const int _uBlurIntensityIndex = 5;
+  static const int _uDispersionStrengthIndex = 6;
+  static const int _uBorderRadiusIndex = 7; // New uniform
+  static const int _uTextureIndex = 0; // Sampler
 
   RoundedLiquidGlassShader() : super(shaderAssetPath: 'shaders/rounded_liquid_glass.frag');
 

@@ -1,6 +1,6 @@
 #include <flutter/runtime_effect.glsl>
 
-// Uniforms from Flutter
+// Uniforms from Flutter (matching original shader layout)
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 uniform float uEffectSize; // Controls the size of the lens effect (0.1 to 2.0 recommended)
