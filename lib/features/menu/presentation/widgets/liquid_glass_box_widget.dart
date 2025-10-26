@@ -10,6 +10,11 @@ class LiquidGlassBoxWidget extends StatefulWidget {
   final Offset initialPosition;
   final double borderRadius;
   final Widget? child;
+  final double leftMargin;
+  final double rightMargin;
+  final double topMargin;
+  final double bottomMargin;
+  final double debugBorderRadius;
   
   const LiquidGlassBoxWidget({
     super.key,
@@ -19,6 +24,11 @@ class LiquidGlassBoxWidget extends StatefulWidget {
     required this.initialPosition,
     this.borderRadius = 6.0,
     this.child,
+    this.leftMargin = 50.0,
+    this.rightMargin = 5.0,
+    this.topMargin = 8.0,
+    this.bottomMargin = 8.0,
+    this.debugBorderRadius = 35.0,
   });
 
   @override
@@ -59,17 +69,19 @@ class LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(widget.borderRadius),
-      child: BackgroundCaptureWidget(
-        key: _backgroundCaptureKey,
-        width: widget.width,
-        height: widget.height,
-        initialPosition: widget.initialPosition,
-        backgroundKey: widget.backgroundKey,
-        shader: _liquidGlassShader,
-        child: widget.child ?? const SizedBox.shrink(),
-      ),
-    );
+    return BackgroundCaptureWidget(
+            key: _backgroundCaptureKey,
+            width: widget.width, // Use full width without padding reduction
+            height: widget.height, // Use full height without padding reduction
+            initialPosition: widget.initialPosition,
+            backgroundKey: widget.backgroundKey,
+            shader: _liquidGlassShader,
+            leftMargin: widget.leftMargin,
+            rightMargin: widget.rightMargin,
+            topMargin: widget.topMargin,
+            bottomMargin: widget.bottomMargin,
+            borderRadius: widget.debugBorderRadius,
+            child: widget.child ?? const SizedBox.shrink(),
+          );
   }
 }

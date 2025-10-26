@@ -4,6 +4,8 @@ import '../widgets/liquid_glass_box_widget.dart';
 import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
 import '../../domain/entities/menu_entity.dart';
+import '../../../../core/effects/liquid_glass/debug_panel.dart';
+import '../../../../core/effects/liquid_glass/content_position_debug_panel.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -23,6 +25,34 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   bool _isAnimating = false;
   DateTime? _lastTapTime;
   bool _isMenuAnimating = false;
+  
+  // Perfect values from debug panel
+  double _leftMargin = 100.5;
+  double _rightMargin = 101.0;
+  double _topMargin = 2.5;
+  double _bottomMargin = 2.5;
+  double _borderRadius = 166.5;
+  
+  // Content positioning offsets - perfect centering
+  double _contentOffsetX = 0.0;
+  double _contentOffsetY = 0.0;
+  
+  void _onDebugValuesChanged(double leftMargin, double rightMargin, double topMargin, double bottomMargin, double borderRadius) {
+    setState(() {
+      _leftMargin = leftMargin;
+      _rightMargin = rightMargin;
+      _topMargin = topMargin;
+      _bottomMargin = bottomMargin;
+      _borderRadius = borderRadius;
+    });
+  }
+  
+  void _onContentPositionChanged(double offsetX, double offsetY) {
+    setState(() {
+      _contentOffsetX = offsetX;
+      _contentOffsetY = offsetY;
+    });
+  }
 
   @override
   void initState() {
@@ -267,21 +297,36 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       opacity: _fadeAnimation.value,
                       child: Center(
                         child: LiquidGlassBoxWidget(
-                          key: _mainCardKey,
-                          backgroundKey: backgroundKey,
-                          width: 800,
-                          height: 600,
-                          initialPosition: Offset.zero,
-                          borderRadius: 20.0,
+                    key: _mainCardKey,
+                    backgroundKey: backgroundKey,
+                    width: 800,
+                    height: 600,
+                    initialPosition: Offset.zero,
+                    borderRadius: 20.0,
+                    leftMargin: _leftMargin,
+                    rightMargin: _rightMargin,
+                    topMargin: _topMargin,
+                    bottomMargin: _bottomMargin,
+                    debugBorderRadius: _borderRadius,
                     child: Padding(
                       padding: const EdgeInsets.all(60.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Content container for positioning
+                            Transform.translate(
+                              offset: Offset(_contentOffsetX, _contentOffsetY),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
                           // Hero Section
                           Text(
                             'Hello, I\'m',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.3),
                               fontSize: 24,
@@ -292,6 +337,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                           const SizedBox(height: 20),
                           const Text(
                             'ALI SINAEE',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 80,
@@ -347,7 +393,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                               ),
                             ),
                           ),
-                        ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -357,6 +407,22 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ),
           
           // Menu is handled by BackgroundAnimationWidget internally
+          
+          // Debug Panels - DISABLED (perfect values applied)
+          // LiquidGlassDebugPanel(
+          //   onValuesChanged: _onDebugValuesChanged,
+          //   initialLeftMargin: _leftMargin,
+          //   initialRightMargin: _rightMargin,
+          //   initialTopMargin: _topMargin,
+          //   initialBottomMargin: _bottomMargin,
+          //   initialBorderRadius: _borderRadius,
+          // ),
+          
+          // ContentPositionDebugPanel(
+          //   onPositionChanged: _onContentPositionChanged,
+          //   initialOffsetX: _contentOffsetX,
+          //   initialOffsetY: _contentOffsetY,
+          // ),
         ],
       ),
     );

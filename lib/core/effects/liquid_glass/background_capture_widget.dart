@@ -16,6 +16,11 @@ class BackgroundCaptureWidget extends StatefulWidget {
     this.initialPosition,
     this.captureInterval = const Duration(milliseconds: 8),
     this.backgroundKey,
+    this.leftMargin = 50.0,
+    this.rightMargin = 5.0,
+    this.topMargin = 8.0,
+    this.bottomMargin = 8.0,
+    this.borderRadius = 35.0,
   });
 
   final Widget child;
@@ -27,6 +32,11 @@ class BackgroundCaptureWidget extends StatefulWidget {
   final GlobalKey? backgroundKey;
 
   final BaseShader shader;
+  final double leftMargin;
+  final double rightMargin;
+  final double topMargin;
+  final double bottomMargin;
+  final double borderRadius;
 
   @override
   State<BackgroundCaptureWidget> createState() =>
@@ -93,14 +103,28 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
         backgroundImage: capturedBackground,
       );
       return CustomPaint(
-        size: Size(widget.width, widget.height),
-        painter: ShaderPainter(widget.shader.shader),
-        child: widget.child,
+        size: Size(widget.width, widget.height), // Use full size without any constraints
+        painter: ShaderPainter(
+          widget.shader.shader,
+          leftMargin: widget.leftMargin,
+          rightMargin: widget.rightMargin,
+          topMargin: widget.topMargin,
+          bottomMargin: widget.bottomMargin,
+          borderRadius: widget.borderRadius,
+              showRedBorder: false,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 50, right: 50, top: 8, bottom: 8), // Keep padding only for content
+          child: widget.child,
+        ),
       );
     }
 
     // Fallback to normal child
-    return widget.child;
+    return Padding(
+      padding: const EdgeInsets.only(left: 50, right: 50, top: 8, bottom: 8), // Symmetric margins for proper centering
+      child: widget.child,
+    );
   }
 
   Future<void> _captureBackground() async {
@@ -158,7 +182,8 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
         // Fallback: capture the entire boundary and crop
         croppedImage = await boundary.toImage(pixelRatio: pixelRatio);
       } else {
-        croppedImage = await offsetLayer.toImage(
+        croppedImage = await offsetLayer
+        .toImage(
           regionToCapture,
           pixelRatio: pixelRatio,
         );
