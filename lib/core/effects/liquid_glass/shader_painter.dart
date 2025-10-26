@@ -38,9 +38,18 @@ class ShaderPainter extends CustomPainter {
       );
       final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
       
-      // Apply the shader to the entire canvas without clipping
+      // Save the canvas state
+      canvas.save();
+      
+      // Clip to the rounded rectangle - this will contain the shader effect
+      canvas.clipRRect(rrect);
+      
+      // Apply the shader only within the clipped area
       final paint = Paint()..shader = shader;
       canvas.drawRect(Offset.zero & size, paint);
+      
+      // Restore the canvas state
+      canvas.restore();
       
       // Red border when debug panel is visible
       if (showRedBorder) {
