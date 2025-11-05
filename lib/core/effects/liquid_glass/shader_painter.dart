@@ -41,12 +41,27 @@ class ShaderPainter extends CustomPainter {
       // Save the canvas state
       canvas.save();
       
-      // Clip to the rounded rectangle - this will contain the shader effect
-      canvas.clipRRect(rrect);
+      // ENHANCED CLIPPING FOR WEB - Multiple layers of containment
+      // 1. First clip to the exact widget bounds
+      canvas.clipRect(Offset.zero & size);
       
-      // Apply the shader only within the clipped area
-      final paint = Paint()..shader = shader;
-      canvas.drawRect(Offset.zero & size, paint);
+      // 2. Then clip to the rounded rectangle with additional padding for web safety
+      final webSafeRect = Rect.fromLTRB(
+        leftMargin + 1.0, 
+        topMargin + 1.0, 
+        size.width - rightMargin - 1.0, 
+        size.height - bottomMargin - 1.0
+      );
+      final webSafeRRect = RRect.fromRectAndRadius(webSafeRect, Radius.circular(borderRadius));
+      canvas.clipRRect(webSafeRRect);
+      
+      // 3. Apply the shader only within the clipped area
+      final paint = Paint()
+        ..shader = shader
+        ..isAntiAlias = true; // Enable anti-aliasing for smoother edges
+      
+      // Draw only within the safe clipped area
+      canvas.drawRRect(webSafeRRect, paint);
       
       // Restore the canvas state
       canvas.restore();
@@ -60,6 +75,7 @@ class ShaderPainter extends CustomPainter {
         canvas.drawRRect(rrect, borderPaint);
       }
     } catch (e) {
+      // Fallback: draw transparent rectangle
       final paint = Paint()..color = Colors.transparent;
       canvas.drawRect(Offset.zero & size, paint);
     }

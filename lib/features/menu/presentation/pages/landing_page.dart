@@ -4,8 +4,7 @@ import '../widgets/liquid_glass_box_widget.dart';
 import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
 import '../../domain/entities/menu_entity.dart';
-import '../../../../core/effects/liquid_glass/debug_panel.dart';
-import '../../../../core/effects/liquid_glass/content_position_debug_panel.dart';
+
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -37,22 +36,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   double _contentOffsetX = 0.0;
   double _contentOffsetY = 0.0;
   
-  void _onDebugValuesChanged(double leftMargin, double rightMargin, double topMargin, double bottomMargin, double borderRadius) {
-    setState(() {
-      _leftMargin = leftMargin;
-      _rightMargin = rightMargin;
-      _topMargin = topMargin;
-      _bottomMargin = bottomMargin;
-      _borderRadius = borderRadius;
-    });
-  }
-  
-  void _onContentPositionChanged(double offsetX, double offsetY) {
-    setState(() {
-      _contentOffsetX = offsetX;
-      _contentOffsetY = offsetY;
-    });
-  }
+
 
   @override
   void initState() {
@@ -296,18 +280,26 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     return Opacity(
                       opacity: _fadeAnimation.value,
                       child: Center(
-                        child: LiquidGlassBoxWidget(
-                    key: _mainCardKey,
-                    backgroundKey: backgroundKey,
-                    width: 800,
-                    height: 600,
-                    initialPosition: Offset.zero,
-                    borderRadius: 20.0,
-                    leftMargin: _leftMargin,
-                    rightMargin: _rightMargin,
-                    topMargin: _topMargin,
-                    bottomMargin: _bottomMargin,
-                    debugBorderRadius: _borderRadius,
+                        // WEB DEPLOYMENT FIX: Add containment wrapper
+                        child: Container(
+                          width: 800,
+                          height: 600,
+                          clipBehavior: Clip.hardEdge,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(_borderRadius),
+                          ),
+                          child: LiquidGlassBoxWidget(
+                            key: _mainCardKey,
+                            backgroundKey: backgroundKey,
+                            width: 800,
+                            height: 600,
+                            initialPosition: Offset.zero,
+                            borderRadius: 20.0,
+                            leftMargin: _leftMargin,
+                            rightMargin: _rightMargin,
+                            topMargin: _topMargin,
+                            bottomMargin: _bottomMargin,
+                            debugBorderRadius: _borderRadius,
                     child: Padding(
                       padding: const EdgeInsets.all(60.0),
                       child: SizedBox(
@@ -399,9 +391,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                ),
+                            ),
+                          ),
+                        ),
+                      ),
               );
             },
           ),
