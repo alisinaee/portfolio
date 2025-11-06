@@ -50,8 +50,16 @@ class AppMenuController extends ChangeNotifier {
     return _selectedMenuItem == id;
   }
 
+  bool _isNotifying = false;
+  
   void onMenuButtonTap() {
+    if (_isNotifying) {
+      debugPrint('🚫 [MenuController] onMenuButtonTap ignored - already notifying');
+      return;
+    }
+    
     final oldState = _menuState;
+    debugPrint('🎮 [MenuController] onMenuButtonTap called - Current state: $oldState');
     
     if (_menuState == MenuState.open) {
       _menuState = MenuState.close;
@@ -59,22 +67,31 @@ class AppMenuController extends ChangeNotifier {
       _menuState = MenuState.open;
     }
     
+    debugPrint('🎮 [MenuController] State changed: $oldState -> $_menuState');
+    
     PerformanceLogger.logAnimation(_performanceId, 'Menu state changed', data: {
       'from': oldState.name,
       'to': _menuState.name,
     });
     
+    _isNotifying = true;
     notifyListeners();
+    
+    // Reset notification flag after a brief delay
+    Future.microtask(() {
+      _isNotifying = false;
+    });
   }
 
   Future<void> onSelectItem(MenuItems id) async {
     if (_selectedMenuItem == id) {
-      // Already selected, just close menu
+      // Already selected, just close menu smoothly
       _menuState = MenuState.close;
       notifyListeners();
       return;
     }
     
+    // Update selection first
     _selectedMenuItem = id;
     
     PerformanceLogger.logAnimation(_performanceId, 'Item selected', data: {
@@ -83,9 +100,13 @@ class AppMenuController extends ChangeNotifier {
     
     notifyListeners();
     
-    await Future.delayed(const Duration(seconds: 2));
-    _menuState = MenuState.close;
-    notifyListeners();
+    // Wait for selection animation to complete, then close menu
+    await Future.delayed(const Duration(milliseconds: 1500));
+    
+    if (_menuState == MenuState.open) {
+      _menuState = MenuState.close;
+      notifyListeners();
+    }
   }
 
   double getTune(MenuItems id) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/effects/liquid_glass/liquid_glass_lens_shader.dart'; // Back to original shader
 import '../../../../core/effects/liquid_glass/background_capture_widget.dart';
+import '../../../../core/effects/liquid_glass/shader_manager.dart';
 
 /// A reusable liquid glass box widget with customizable size and position
 class LiquidGlassBoxWidget extends StatefulWidget {
@@ -43,12 +44,15 @@ class LiquidGlassBoxWidgetState extends State<LiquidGlassBoxWidget> {
   @override
   void initState() {
     super.initState();
-    _liquidGlassShader = LiquidGlassLensShader();
+    // Use cached shader instance to prevent reloading
+    _liquidGlassShader = ShaderManager.instance.getLiquidGlassShader();
     _initializeShader();
   }
 
   Future<void> _initializeShader() async {
-    await _liquidGlassShader.initialize();
+    if (!_liquidGlassShader.isLoaded) {
+      await _liquidGlassShader.initialize();
+    }
     if (mounted) {
       setState(() {});
     }

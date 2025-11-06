@@ -65,42 +65,55 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     });
   }
 
+  MenuState? _lastProcessedState;
+  
   void _onMenuStateChanged() {
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
-    debugPrint('🔄 [MenuState] State changed to: ${menuController.menuState}');
-    debugPrint('🔄 [MenuState] Animation flag: $_isAnimating');
+    // Prevent processing the same state change multiple times
+    if (_lastProcessedState == menuController.menuState) {
+      debugPrint('🚫 [MenuState] DUPLICATE state change ignored: ${menuController.menuState}');
+      return;
+    }
     
-    // If menu was closed (either by button or item selection), fade in the card
+    _lastProcessedState = menuController.menuState;
+    debugPrint('🔄 [MenuState] STATE CHANGED to: ${menuController.menuState}');
+    
     if (menuController.menuState == MenuState.close) {
-      debugPrint('🎬 [MenuState] Menu closed, starting card fade-in animation');
-      // Use a shorter delay to allow menu close animation to complete
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (mounted) {
-          debugPrint('🎬 [MenuState] Starting card fade-in, current value: ${_fadeController.value}');
-          // Always reverse the animation to show the card
+      debugPrint('🎬 [MenuState] MENU CLOSING - Starting transition to background');
+      
+      setState(() {
+        _isMenuAnimating = false;
+      });
+      
+      // Wait for menu close animation to complete, then fade in card
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted && _lastProcessedState == MenuState.close) {
+          debugPrint('🎬 [MenuState] Starting card fade-in');
           _fadeController.reverse().then((_) {
-            debugPrint('✅ [MenuState] Card fade-in complete - resetting animation flag');
-            setState(() {
-              _isAnimating = false; // Reset animation flag when fade-in completes
-              _isMenuAnimating = false; // Reset menu animation flag
-            });
+            if (mounted) {
+              setState(() {
+                _isAnimating = false;
+              });
+              debugPrint('✅ [MenuState] TRANSITION TO BACKGROUND COMPLETE');
+            }
           });
         }
       });
     } else if (menuController.menuState == MenuState.open) {
-      debugPrint('🎬 [MenuState] Menu opened - setting menu animation flag');
+      debugPrint('🎬 [MenuState] MENU OPENING - Coordinating with background animation');
+      
       setState(() {
         _isMenuAnimating = true;
       });
-      // Reset animation flag after menu open animation completes
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) {
-          debugPrint('✅ [MenuState] Menu open animation complete - resetting animation flag');
+      
+      // Reset animation flags after menu fully opens
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted && _lastProcessedState == MenuState.open) {
           setState(() {
             _isAnimating = false;
-            _isMenuAnimating = false;
           });
+          debugPrint('✅ [MenuState] MENU OPEN COMPLETE');
         }
       });
     }
@@ -120,51 +133,63 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   }
 
   void _onMenuTap() {
-    debugPrint('🎯 [MenuButton] Tap detected - checking debounce...');
+    final now = DateTime.now();
+    debugPrint('🎯 [MenuButton] TAP DETECTED at ${now.toString().substring(11, 23)}');
+    debugPrint('🎯 [MenuButton] _isAnimating: $_isAnimating, _isMenuAnimating: $_isMenuAnimating');
     
     if (_isAnimating || _isMenuAnimating) {
-      debugPrint('🚫 [MenuButton] Tap ignored - animation in progress (card: $_isAnimating, menu: $_isMenuAnimating)');
-      return;
+      debugPrint('🚫 [MenuButton] TAP IGNORED - Animation in progress');
+      return; // Ignore taps during animation
     }
     
-    final now = DateTime.now();
-    if (_lastTapTime != null && now.difference(_lastTapTime!).inMilliseconds < 800) {
-      debugPrint('🚫 [MenuButton] Tap ignored - debounce active (${now.difference(_lastTapTime!).inMilliseconds}ms ago)');
-      return; // Debounce: ignore taps within 800ms
+    if (_lastTapTime != null) {
+      final timeDiff = now.difference(_lastTapTime!).inMilliseconds;
+      debugPrint('🎯 [MenuButton] Time since last tap: ${timeDiff}ms');
+      if (timeDiff < 500) {
+        debugPrint('🚫 [MenuButton] TAP IGNORED - Debounce active (${timeDiff}ms < 500ms)');
+        return; // Debounce: ignore taps within 500ms
+      }
     }
     
-    debugPrint('✅ [MenuButton] Tap accepted - starting menu open animation');
+    debugPrint('✅ [MenuButton] TAP ACCEPTED - Starting menu animation');
     _lastTapTime = now;
+    
+    final startTime = DateTime.now();
     setState(() {
       _isAnimating = true;
     });
+    final setStateTime = DateTime.now().difference(startTime).inMilliseconds;
+    debugPrint('⏱️ [MenuButton] setState took: ${setStateTime}ms');
     
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
     // First fade out the main card
+    debugPrint('🎬 [MenuButton] Starting card fade-out animation');
+    final fadeStartTime = DateTime.now();
     _fadeController.forward().then((_) {
-      debugPrint('🎬 [MenuButton] Card fade-out complete - opening menu');
-      // Then show the menu
-      menuController.onMenuButtonTap();
-      // Don't reset _isAnimating here - let _onMenuStateChanged handle it
+      final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
+      debugPrint('🎬 [MenuButton] Card fade-out completed in ${fadeTime}ms');
+      
+      if (mounted) {
+        debugPrint('🎬 [MenuButton] Triggering menu state change');
+        final menuStartTime = DateTime.now();
+        menuController.onMenuButtonTap();
+        final menuTime = DateTime.now().difference(menuStartTime).inMilliseconds;
+        debugPrint('🎬 [MenuButton] Menu state change took: ${menuTime}ms');
+      }
     });
   }
 
   void _onMenuClose() {
-    debugPrint('🎯 [MenuButton] Close tap detected - checking debounce...');
-    
     if (_isAnimating || _isMenuAnimating) {
-      debugPrint('🚫 [MenuButton] Close tap ignored - animation in progress (card: $_isAnimating, menu: $_isMenuAnimating)');
-      return;
+      return; // Ignore taps during animation
     }
     
     final now = DateTime.now();
-    if (_lastTapTime != null && now.difference(_lastTapTime!).inMilliseconds < 800) {
-      debugPrint('🚫 [MenuButton] Close tap ignored - debounce active (${now.difference(_lastTapTime!).inMilliseconds}ms ago)');
-      return; // Debounce: ignore taps within 800ms
+    if (_lastTapTime != null && now.difference(_lastTapTime!).inMilliseconds < 500) {
+      return; // Debounce: ignore taps within 500ms
     }
     
-    debugPrint('✅ [MenuButton] Close tap accepted - closing menu');
     _lastTapTime = now;
     setState(() {
       _isAnimating = true;
@@ -172,10 +197,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
-    // Close the menu first
+    // Close the menu first - this will trigger smooth transition back
     menuController.onMenuButtonTap();
-    
-    // The fade animation will be handled by _onMenuStateChanged
   }
 
 
@@ -196,79 +219,84 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           
               // Liquid Glass Menu button - changes to close button when menu is open
               Positioned(
-            top: 20,
-            left: 20,
-                child: menuController.menuState == MenuState.open
-                    ? GestureDetector(
-                        onTap: (_isAnimating || _isMenuAnimating) ? null : _onMenuClose,
-                        child: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: (_isAnimating || _isMenuAnimating)
-                                ? Colors.white.withValues(alpha:0.05)
-                                : Colors.white.withValues(alpha:0.1),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: (_isAnimating || _isMenuAnimating)
-                                  ? Colors.white.withValues(alpha:0.1)
-                                  : Colors.white.withValues(alpha:0.3),
-                              width: 1,
+                top: 20,
+                left: 20,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: menuController.menuState == MenuState.open
+                      ? GestureDetector(
+                          key: const ValueKey('close'),
+                          onTap: _isAnimating ? null : _onMenuClose,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _isAnimating
+                                  ? Colors.white.withValues(alpha:0.05)
+                                  : Colors.white.withValues(alpha:0.1),
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: _isAnimating
+                                    ? Colors.white.withValues(alpha:0.1)
+                                    : Colors.white.withValues(alpha:0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: _isAnimating
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
                             ),
                           ),
-                          child: Center(
-                            child: (_isAnimating || _isMenuAnimating)
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                        )
+                      : GestureDetector(
+                          key: const ValueKey('menu'),
+                          onTap: _isAnimating ? null : _onMenuTap,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _isAnimating
+                                  ? Colors.white.withValues(alpha:0.05)
+                                  : Colors.white.withValues(alpha:0.1),
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: _isAnimating
+                                    ? Colors.white.withValues(alpha:0.1)
+                                    : Colors.white.withValues(alpha:0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: _isAnimating
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.menu,
+                                      color: Colors.white,
+                                      size: 20,
                                     ),
-                                  )
-                                : const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                          ),
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: (_isAnimating || _isMenuAnimating) ? null : _onMenuTap,
-                        child: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: (_isAnimating || _isMenuAnimating)
-                                ? Colors.white.withValues(alpha:0.05)
-                                : Colors.white.withValues(alpha:0.1),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: (_isAnimating || _isMenuAnimating)
-                                  ? Colors.white.withValues(alpha:0.1)
-                                  : Colors.white.withValues(alpha:0.3),
-                              width: 1,
                             ),
                           ),
-                          child: Center(
-                            child: (_isAnimating || _isMenuAnimating)
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.menu,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                          ),
                         ),
-                      ),
+                ),
               ),
               
               // One big centered card with fade animation
@@ -280,124 +308,116 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     return Opacity(
                       opacity: _fadeAnimation.value,
                       child: Center(
-                        // WEB DEPLOYMENT FIX: Add containment wrapper
-                        child: Container(
+                        // Clean liquid glass rendering (distortion fixed in shader)
+                        child: LiquidGlassBoxWidget(
+                          key: _mainCardKey,
+                          backgroundKey: backgroundKey,
                           width: 800,
                           height: 600,
-                          clipBehavior: Clip.hardEdge,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(_borderRadius),
-                          ),
-                          child: LiquidGlassBoxWidget(
-                            key: _mainCardKey,
-                            backgroundKey: backgroundKey,
-                            width: 800,
-                            height: 600,
-                            initialPosition: Offset.zero,
-                            borderRadius: 20.0,
-                            leftMargin: _leftMargin,
-                            rightMargin: _rightMargin,
-                            topMargin: _topMargin,
-                            bottomMargin: _bottomMargin,
-                            debugBorderRadius: _borderRadius,
-                    child: Padding(
-                      padding: const EdgeInsets.all(60.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Content container for positioning
-                            Transform.translate(
-                              offset: Offset(_contentOffsetX, _contentOffsetY),
+                          initialPosition: Offset.zero,
+                          borderRadius: 20.0,
+                          leftMargin: _leftMargin,
+                          rightMargin: _rightMargin,
+                          topMargin: _topMargin,
+                          bottomMargin: _bottomMargin,
+                          debugBorderRadius: _borderRadius,
+                          child: Padding(
+                            padding: const EdgeInsets.all(60.0),
+                            child: SizedBox(
+                              width: double.infinity,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                          // Hero Section
-                          Text(
-                            'Hello, I\'m',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              fontSize: 24,
-                              fontFamily: 'Ganyme',
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'ALI SINAEE',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 80,
-                              fontFamily: 'Ganyme',
-                              fontWeight: FontWeight.w400,
-                              letterSpacing: 2.0,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            width: 120,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha:0.4),
-                              borderRadius: BorderRadius.circular(1),
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                          
-                          // Description
-                          Text(
-                            'Senior Flutter Expert & Mobile App Developer',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha:0.4),
-                              fontSize: 28,
-                              fontFamily: 'Ganyme',
-                              fontWeight: FontWeight.w300,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 60),
-                          
-                          // CTA Button
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha:0.1),
-                              borderRadius: BorderRadius.circular(35),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha:0.2),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'GET IN TOUCH',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha:0.5),
-                                fontSize: 18,
-                                fontFamily: 'Ganyme',
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ),
+                                  // Content container for positioning
+                                  Transform.translate(
+                                    offset: Offset(_contentOffsetX, _contentOffsetY),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        // Hero Section
+                                        Text(
+                                          'Hello, I\'m',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(alpha: 0.3),
+                                            fontSize: 24,
+                                            fontFamily: 'Ganyme',
+                                            fontWeight: FontWeight.w300,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        const Text(
+                                          'ALI SINAEE',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 80,
+                                            fontFamily: 'Ganyme',
+                                            fontWeight: FontWeight.w400,
+                                            letterSpacing: 2.0,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Container(
+                                          width: 120,
+                                          height: 3,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha:0.4),
+                                            borderRadius: BorderRadius.circular(1),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 40),
+                                        
+                                        // Description
+                                        Text(
+                                          'Senior Flutter Expert & Mobile App Developer',
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(alpha:0.4),
+                                            fontSize: 28,
+                                            fontFamily: 'Ganyme',
+                                            fontWeight: FontWeight.w300,
+                                            height: 1.4,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 60),
+                                        
+                                        // CTA Button
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha:0.1),
+                                            borderRadius: BorderRadius.circular(35),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(alpha:0.2),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'GET IN TOUCH',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha:0.5),
+                                              fontSize: 18,
+                                              fontFamily: 'Ganyme',
+                                              fontWeight: FontWeight.w400,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                            ),
                           ),
                         ),
                       ),
-              );
-            },
-          ),
+                    );
+                  },
+                ),
           
           // Menu is handled by BackgroundAnimationWidget internally
           

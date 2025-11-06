@@ -23,6 +23,7 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
   late final AnimationController _controller; // shared clock
   late final Animation<double> _animA; // direct
   late final Animation<double> _animB; // reverse of A
+  bool _isAnimationActive = true;
 
   @override
   void initState() {
@@ -31,11 +32,32 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 45));
     _animA = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _animB = ReverseAnimation(_animA);
-    _controller.repeat(reverse: true);
+    _startAnimation();
+  }
+
+  void _startAnimation() {
+    if (_isAnimationActive && mounted) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  void _pauseAnimation() {
+    if (mounted) {
+      _controller.stop();
+      _isAnimationActive = false;
+    }
+  }
+
+  void _resumeAnimation() {
+    if (mounted && !_isAnimationActive) {
+      _isAnimationActive = true;
+      _startAnimation();
+    }
   }
 
   @override
   void dispose() {
+    _isAnimationActive = false;
     _controller.dispose();
     super.dispose();
   }
@@ -61,9 +83,13 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
         items: controller.menuItems,
       ),
       // shouldRebuild only when state or items reference changes
-      shouldRebuild: (previous, next) => 
-          previous.state != next.state || 
-          previous.items != next.items,
+      shouldRebuild: (previous, next) {
+        final shouldRebuild = previous.state != next.state || previous.items != next.items;
+        if (shouldRebuild) {
+          debugPrint('🔄 [BackgroundAnimationWidget] State: ${previous.state} -> ${next.state}');
+        }
+        return shouldRebuild;
+      },
       builder: (context, data, child) {
         final isMenuOpen = data.state == MenuState.open;
         

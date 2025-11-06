@@ -11,6 +11,7 @@ import 'features/menu/data/repositories/menu_repository_impl.dart';
 import 'features/menu/presentation/controllers/menu_controller.dart';
 import 'features/menu/presentation/pages/main_app_widget.dart';
 import 'core/utils/memory_manager.dart';
+import 'core/effects/liquid_glass/shader_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,9 @@ void main() async {
   
   // Start periodic memory cleanup to prevent leaks
   MemoryManager.startPeriodicCleanup();
+  
+  // Initialize shaders once at startup
+  await ShaderManager.instance.initializeShaders();
   
   runApp(const MovingTextBackgroundApp());
 }

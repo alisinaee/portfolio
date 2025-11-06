@@ -14,20 +14,37 @@ class BaseShader {
   late ui.FragmentShader _shader;
 
   bool _isLoaded = false;
+  bool _isLoading = false;
+  
+  // Static cache to prevent multiple loads of the same shader
+  static final Map<String, BaseShader> _shaderCache = {};
 
   ui.FragmentShader get shader => _shader;
   bool get isLoaded => _isLoaded;
 
+  static BaseShader getInstance(String shaderAssetPath) {
+    return _shaderCache.putIfAbsent(shaderAssetPath, () => BaseShader._(shaderAssetPath));
+  }
+
+  BaseShader._(this.shaderAssetPath);
+
   Future<void> initialize() async {
+    if (_isLoaded || _isLoading) return;
     await _loadShader();
   }
 
   Future<void> _loadShader() async {
+    if (_isLoaded || _isLoading) return;
+    
+    _isLoading = true;
+    
     try {
-      debugPrint('🔍 [BaseShader] ===== SHADER LOADING START =====');
-      debugPrint('🔍 [BaseShader] Shader path: $shaderAssetPath');
-      debugPrint('🔍 [BaseShader] Current working directory: ${Uri.base}');
-      debugPrint('🔍 [BaseShader] Is Web: $kIsWeb');
+      if (kDebugMode) {
+        debugPrint('🔍 [BaseShader] ===== SHADER LOADING START =====');
+        debugPrint('🔍 [BaseShader] Shader path: $shaderAssetPath');
+        debugPrint('🔍 [BaseShader] Current working directory: ${Uri.base}');
+        debugPrint('🔍 [BaseShader] Is Web: $kIsWeb');
+      }
       
       if (kIsWeb) {
         // For web, try multiple paths to find the compiled shader
@@ -40,12 +57,12 @@ class BaseShader {
         ui.FragmentProgram? program;
         for (final path in webPaths) {
           try {
-            debugPrint('🔍 [BaseShader] Trying web path: $path');
+            if (kDebugMode) debugPrint('🔍 [BaseShader] Trying web path: $path');
             program = await ui.FragmentProgram.fromAsset(path);
-            debugPrint('✅ [BaseShader] Loaded from web path: $path');
+            if (kDebugMode) debugPrint('✅ [BaseShader] Loaded from web path: $path');
             break;
           } catch (e) {
-            debugPrint('❌ [BaseShader] Failed web path $path: $e');
+            if (kDebugMode) debugPrint('❌ [BaseShader] Failed web path $path: $e');
           }
         }
         
@@ -56,25 +73,31 @@ class BaseShader {
         _program = program;
       } else {
         // For non-web platforms, use the original path
-        debugPrint('🔍 [BaseShader] Loading shader for non-web platform: $shaderAssetPath');
+        if (kDebugMode) debugPrint('🔍 [BaseShader] Loading shader for non-web platform: $shaderAssetPath');
         _program = await ui.FragmentProgram.fromAsset(shaderAssetPath);
       }
       
-      debugPrint('✅ [BaseShader] FragmentProgram loaded successfully');
+      if (kDebugMode) debugPrint('✅ [BaseShader] FragmentProgram loaded successfully');
       
       _shader = _program.fragmentShader();
-      debugPrint('✅ [BaseShader] FragmentShader created successfully');
+      if (kDebugMode) debugPrint('✅ [BaseShader] FragmentShader created successfully');
       
       _isLoaded = true;
-      debugPrint('✅ [BaseShader] Shader fully loaded and ready');
-      debugPrint('🔍 [BaseShader] ===== SHADER LOADING SUCCESS =====');
+      _isLoading = false;
+      if (kDebugMode) {
+        debugPrint('✅ [BaseShader] Shader fully loaded and ready');
+        debugPrint('🔍 [BaseShader] ===== SHADER LOADING SUCCESS =====');
+      }
     } catch (e, stackTrace) {
-      debugPrint('❌ [BaseShader] ===== SHADER LOADING FAILED =====');
-      debugPrint('❌ [BaseShader] Error: $e');
-      debugPrint('❌ [BaseShader] Error type: ${e.runtimeType}');
-      debugPrint('❌ [BaseShader] Shader path was: $shaderAssetPath');
-      debugPrint('❌ [BaseShader] Stack trace: $stackTrace');
-      debugPrint('❌ [BaseShader] ===== END ERROR =====');
+      _isLoading = false;
+      if (kDebugMode) {
+        debugPrint('❌ [BaseShader] ===== SHADER LOADING FAILED =====');
+        debugPrint('❌ [BaseShader] Error: $e');
+        debugPrint('❌ [BaseShader] Error type: ${e.runtimeType}');
+        debugPrint('❌ [BaseShader] Shader path was: $shaderAssetPath');
+        debugPrint('❌ [BaseShader] Stack trace: $stackTrace');
+        debugPrint('❌ [BaseShader] ===== END ERROR =====');
+      }
     }
   }
 

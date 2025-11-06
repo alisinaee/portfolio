@@ -103,32 +103,21 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
         backgroundImage: capturedBackground,
       );
       
-      // ENHANCED CONTAINMENT FOR WEB DEPLOYMENT
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          // Add a container to ensure strict bounds
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-          ),
-          child: CustomPaint(
-            size: Size(widget.width, widget.height),
-            painter: ShaderPainter(
-              widget.shader.shader,
-              leftMargin: widget.leftMargin,
-              rightMargin: widget.rightMargin,
-              topMargin: widget.topMargin,
-              bottomMargin: widget.bottomMargin,
-              borderRadius: widget.borderRadius,
-              showRedBorder: false,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 50, right: 50, top: 8, bottom: 8),
-              child: widget.child,
-            ),
-          ),
+      // Clean shader rendering without ClipRect (distortion fixed in shader)
+      return CustomPaint(
+        size: Size(widget.width, widget.height),
+        painter: ShaderPainter(
+          widget.shader.shader,
+          leftMargin: widget.leftMargin,
+          rightMargin: widget.rightMargin,
+          topMargin: widget.topMargin,
+          bottomMargin: widget.bottomMargin,
+          borderRadius: widget.borderRadius,
+          showRedBorder: false,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 50, right: 50, top: 8, bottom: 8),
+          child: widget.child,
         ),
       );
     }

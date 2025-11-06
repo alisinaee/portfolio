@@ -113,23 +113,37 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
     super.dispose();
   }
 
+  bool? _lastMenuOpenState;
+  
   @override
   Widget build(BuildContext context) {
     _buildCount++;
     
-    // Only log every 60 builds to reduce overhead
-    if (_buildCount % 60 == 0) {
-      PerformanceLogger.startBuild(_performanceId);
+    // Only rebuild if menu state actually changed
+    if (_lastMenuOpenState == widget.isMenuOpen) {
+      // Return cached widget if state hasn't changed
+      return _cachedWidget ?? _buildWidget();
     }
+    
+    _lastMenuOpenState = widget.isMenuOpen;
+    debugPrint('🏗️ [${_performanceId}] Build #${_buildCount} - Menu state changed to: ${widget.isMenuOpen}');
+    
+    return _buildWidget();
+  }
+  
+  Widget? _cachedWidget;
+  
+  Widget _buildWidget() {
+    final buildStartTime = DateTime.now();
     
     // RepaintBoundary to isolate widget repaints
     final builtWidget = RepaintBoundary(
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 800),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
+        duration: const Duration(milliseconds: 600), // Faster transition
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
         transitionBuilder: (child, animation) {
-          // Use FadeTransition (GPU-accelerated) instead of SizeTransition (layout-heavy)
+          // Use FadeTransition for smooth menu/background transitions
           return FadeTransition(
             opacity: animation,
             child: child,
@@ -137,20 +151,26 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
         },
         child: widget.isMenuOpen
             ? _buildInnerWidget(
-                key: 'm',
+                key: 'menu',
                 children: menuList,
               )
             : _buildInnerWidget(
-                key: 'b',
+                key: 'background',
                 children: backgroundList,
               ),
       ),
     );
     
-    if (_buildCount % 60 == 0) {
-      PerformanceLogger.endBuild(_performanceId);
+    final buildTime = DateTime.now().difference(buildStartTime).inMilliseconds;
+    
+    if (buildTime > 16) {
+      debugPrint('🐌 [${_performanceId}] SLOW BUILD #${_buildCount}: ${buildTime}ms (>16ms target)');
+    } else {
+      debugPrint('⚡ [${_performanceId}] Build #${_buildCount} took: ${buildTime}ms');
     }
     
+    // Cache the widget for potential reuse
+    _cachedWidget = builtWidget;
     return builtWidget;
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Memory Manager - Helps prevent memory leaks in long-running animations
@@ -18,11 +19,18 @@ class MemoryManager {
   /// Perform memory cleanup
   static void _performCleanup() {
     _cleanupCount++;
-    debugPrint('🧹 [MemoryManager] Performing cleanup #$_cleanupCount');
+    
+    // Only log cleanup in debug mode to reduce overhead
+    if (kDebugMode) {
+      debugPrint('🧹 [MemoryManager] Performing cleanup #$_cleanupCount');
+    }
     
     // Force garbage collection hint
     // Note: Dart's GC will run automatically, but this helps
-    debugPrint('🧹 [MemoryManager] Cleanup complete');
+    
+    if (kDebugMode) {
+      debugPrint('🧹 [MemoryManager] Cleanup complete');
+    }
   }
   
   /// Stop cleanup timer
