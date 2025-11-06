@@ -119,11 +119,11 @@ class AppMenuController extends ChangeNotifier {
     debugPrint('⏱️ [MenuController] Selection update took: ${selectionTime}ms');
     debugPrint('🎨 [MenuController] ===== STEP 1 COMPLETE =====');
     
-    // Step 2: Show selection animation with smooth timing, then start gradual transition
+    // Step 2: Show selection animation with optimized timing for better performance
     debugPrint('⏳ [MenuController] ===== STEP 2: SHOW SELECTION ANIMATION =====');
-    debugPrint('⏳ [MenuController] Showing selection animation for 800ms...');
+    debugPrint('⏳ [MenuController] Showing selection animation for 500ms...'); // PERFORMANCE: Faster selection
     debugPrint('⏳ [MenuController] Current time: ${DateTime.now().toString().substring(11, 23)}');
-    await Future.delayed(const Duration(milliseconds: 800)); // Longer for smoother selection display
+    await Future.delayed(const Duration(milliseconds: 500)); // PERFORMANCE: Reduced from 800ms
     debugPrint('⏳ [MenuController] Selection animation period ended at: ${DateTime.now().toString().substring(11, 23)}');
     debugPrint('⏳ [MenuController] ===== STEP 2 COMPLETE =====');
     

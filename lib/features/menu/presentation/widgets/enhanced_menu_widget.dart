@@ -29,12 +29,12 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
   void initState() {
     super.initState();
     
-    // Optimized animation controller
+    // PERFORMANCE: Faster animation controller for better performance
     _controller = AnimationController(
       vsync: this, 
-      duration: const Duration(seconds: 45)
+      duration: const Duration(seconds: 30) // Reduced from 45s to 30s
     );
-    _animA = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _animA = CurvedAnimation(parent: _controller, curve: Curves.linear); // Linear is faster than easeInOut
     _animB = ReverseAnimation(_animA);
     
     // Start with performance optimization
@@ -52,16 +52,16 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
       debugPrint('🎬 [EnhancedMenu] Menu opening - starting SMOOTH background->menu fade');
       _isInTransition = true;
       
-      // Wait longer for card to fade out completely before beginning menu transition
-      Future.delayed(const Duration(milliseconds: 600), () {
+      // PERFORMANCE: Faster transitions for better responsiveness
+      Future.delayed(const Duration(milliseconds: 400), () { // Reduced from 600ms
         if (mounted && currentState == MenuState.open) {
           debugPrint('🎬 [EnhancedMenu] Card fully faded - beginning smooth menu fade-in');
           setState(() {
             _shouldShowMenu = true;
           });
           
-          // Complete transition with longer fade duration
-          Future.delayed(const Duration(milliseconds: 500), () {
+          // Complete transition with optimized timing
+          Future.delayed(const Duration(milliseconds: 300), () { // Reduced from 500ms
             if (mounted && currentState == MenuState.open) {
               debugPrint('🎬 [EnhancedMenu] Menu fade-in complete');
               setState(() {
@@ -76,8 +76,8 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
       debugPrint('🎬 [EnhancedMenu] Menu closing - starting smooth fade-out');
       _isInTransition = true;
       
-      // Keep menu visible longer for smoother crossfade with background card
-      Future.delayed(const Duration(milliseconds: 600), () {
+      // PERFORMANCE: Faster close transition
+      Future.delayed(const Duration(milliseconds: 400), () { // Reduced from 600ms
         if (mounted && currentState == MenuState.close) {
           debugPrint('🎬 [EnhancedMenu] Smooth fade-out complete - hiding menu items');
           setState(() {
@@ -134,9 +134,9 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
             
             return PerformanceBoost.withMemoryOptimization(
               child: AnimatedOpacity(
-                opacity: isTransitioning ? 0.7 : 1.0, // Smooth fade during transitions
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOutCubic,
+                opacity: isTransitioning ? 0.8 : 1.0, // PERFORMANCE: Less dramatic fade for better performance
+                duration: const Duration(milliseconds: 250), // PERFORMANCE: Faster fade
+                curve: Curves.easeOut, // PERFORMANCE: Simpler curve
                 child: DiagonalWidget(
                   child: Column(
                     children: data.items.asMap().entries.map((entry) {
@@ -220,21 +220,21 @@ class _EnhancedMenuItemState extends State<_EnhancedMenuItem> with PerformanceMo
             // FIXED: Proper widget hierarchy - TweenAnimationBuilder -> Expanded -> AnimatedOpacity
             return TweenAnimationBuilder(
               duration: widget.isMenuOpen 
-                  ? const Duration(milliseconds: 2000) // Slower for smoother transitions
-                  : const Duration(seconds: 10), // Slower background animation
+                  ? const Duration(milliseconds: 1200) // PERFORMANCE: Faster menu transitions
+                  : const Duration(seconds: 8), // PERFORMANCE: Faster background animation
               tween: widget.tweenManager(
                 menuState: data.state,
                 flex: widget.menuItem.flexSize, 
                 isOnHover: data.isHover,
               ),
-              curve: Curves.easeInOutCubic, // Smoother curve for better transitions
+              curve: Curves.easeOut, // PERFORMANCE: Simpler curve for better performance
               builder: (context, value, child) {
                 return Expanded(
                   flex: value.toInt(), 
                   child: AnimatedOpacity(
-                    opacity: widget.isTransitioning ? 0.8 : 1.0, // Individual item fade during transitions
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
+                    opacity: widget.isTransitioning ? 0.9 : 1.0, // PERFORMANCE: Less dramatic fade
+                    duration: const Duration(milliseconds: 200), // PERFORMANCE: Faster individual fades
+                    curve: Curves.easeOut, // PERFORMANCE: Simpler curve
                     child: child!,
                   ),
                 );

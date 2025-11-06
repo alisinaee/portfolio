@@ -44,7 +44,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   void initState() {
     super.initState();
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1200), // Even longer for ultra-smooth animation
+      duration: const Duration(milliseconds: 800), // PERFORMANCE: Faster animation for better responsiveness
       vsync: this,
     );
     _fadeAnimation = Tween<double>(
@@ -52,15 +52,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       end: 0.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOutQuart, // Ultra-smooth easing curve
+      curve: Curves.easeOut, // PERFORMANCE: Simpler curve for better performance
     ));
     
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.98, // Subtle scale down for elegant effect
+      end: 0.99, // PERFORMANCE: Less dramatic scale for better performance
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOutQuart,
+      curve: Curves.easeOut, // PERFORMANCE: Simpler curve
     ));
     
     // Ensure the card starts visible when menu is closed
@@ -171,9 +171,9 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       final setStateTime = DateTime.now().difference(setStateStartTime).inMilliseconds;
       debugPrint('⏱️ [MenuState] setState (open) took: ${setStateTime}ms');
       
-      // Reset animation flags after menu fully opens with longer timing for smooth transitions
-      debugPrint('⏳ [MenuState] Waiting 800ms for smooth menu open animation...');
-      Future.delayed(const Duration(milliseconds: 800), () { // Longer timing for smoother transitions
+      // Reset animation flags after menu opens with optimized timing for better performance
+      debugPrint('⏳ [MenuState] Waiting 600ms for menu open animation...'); // PERFORMANCE: Faster timing
+      Future.delayed(const Duration(milliseconds: 600), () { // PERFORMANCE: Reduced from 800ms
         if (mounted && _lastProcessedState == MenuState.open) {
           final finalSetStateStartTime = DateTime.now();
           setState(() {
@@ -333,8 +333,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     debugPrint('🎬 [MenuButton] Starting card fade-out animation');
     final fadeStartTime = DateTime.now();
     
-    // Start menu state change with perfect timing for ultra-smooth transition
-    Future.delayed(const Duration(milliseconds: 600), () {
+    // Start menu state change with optimized timing for better performance
+    Future.delayed(const Duration(milliseconds: 400), () { // PERFORMANCE: Faster timing
       if (mounted) {
         debugPrint('🎬 [MenuButton] Triggering menu state change (perfectly timed)');
         final menuStartTime = DateTime.now();
