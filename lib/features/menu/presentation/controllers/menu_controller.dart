@@ -84,29 +84,72 @@ class AppMenuController extends ChangeNotifier {
   }
 
   Future<void> onSelectItem(MenuItems id) async {
+    final startTime = DateTime.now();
+    debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW START =====');
+    debugPrint('🎯 [MenuController] Item selection started: ${id.name}');
+    debugPrint('🎯 [MenuController] Current selection: ${_selectedMenuItem.name}');
+    debugPrint('🎯 [MenuController] Current menu state: ${_menuState.name}');
+    
     if (_selectedMenuItem == id) {
-      // Already selected, just close menu smoothly
+      debugPrint('🔄 [MenuController] Item already selected, closing menu smoothly');
+      debugPrint('🔄 [MenuController] Changing state from ${_menuState.name} to close');
       _menuState = MenuState.close;
+      debugPrint('🔄 [MenuController] About to notify listeners...');
       notifyListeners();
+      debugPrint('🔄 [MenuController] Listeners notified, returning early');
+      debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW END (SAME ITEM) =====');
       return;
     }
     
-    // Update selection first
+    // Step 1: Update selection and show selection animation
+    debugPrint('🎨 [MenuController] ===== STEP 1: UPDATE SELECTION =====');
+    final selectionStartTime = DateTime.now();
+    final previousSelection = _selectedMenuItem;
     _selectedMenuItem = id;
     
     PerformanceLogger.logAnimation(_performanceId, 'Item selected', data: {
       'item': id.name,
+      'previousSelection': previousSelection.name,
     });
     
+    debugPrint('🎨 [MenuController] Selection updated: ${previousSelection.name} -> ${id.name}');
+    debugPrint('🎨 [MenuController] About to notify listeners for selection change...');
     notifyListeners();
+    final selectionTime = DateTime.now().difference(selectionStartTime).inMilliseconds;
+    debugPrint('⏱️ [MenuController] Selection update took: ${selectionTime}ms');
+    debugPrint('🎨 [MenuController] ===== STEP 1 COMPLETE =====');
     
-    // Wait for selection animation to complete, then close menu
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Step 2: Show selection animation with smooth timing, then start gradual transition
+    debugPrint('⏳ [MenuController] ===== STEP 2: SHOW SELECTION ANIMATION =====');
+    debugPrint('⏳ [MenuController] Showing selection animation for 800ms...');
+    debugPrint('⏳ [MenuController] Current time: ${DateTime.now().toString().substring(11, 23)}');
+    await Future.delayed(const Duration(milliseconds: 800)); // Longer for smoother selection display
+    debugPrint('⏳ [MenuController] Selection animation period ended at: ${DateTime.now().toString().substring(11, 23)}');
+    debugPrint('⏳ [MenuController] ===== STEP 2 COMPLETE =====');
     
+    // Step 3: Start gradual transition to background
+    debugPrint('🎬 [MenuController] ===== STEP 3: TRANSITION TO BACKGROUND =====');
+    debugPrint('🎬 [MenuController] Current menu state before transition: ${_menuState.name}');
     if (_menuState == MenuState.open) {
+      debugPrint('🎬 [MenuController] Starting GRADUAL transition to background');
+      debugPrint('🎬 [MenuController] This will trigger coordinated menu fade-out + background fade-in');
+      
+      final closeStartTime = DateTime.now();
+      debugPrint('🎬 [MenuController] Changing state from ${_menuState.name} to close');
       _menuState = MenuState.close;
+      debugPrint('🎬 [MenuController] About to notify listeners for state change...');
       notifyListeners();
+      final closeTime = DateTime.now().difference(closeStartTime).inMilliseconds;
+      debugPrint('⏱️ [MenuController] Gradual menu close took: ${closeTime}ms');
+      debugPrint('🎬 [MenuController] State change notification sent');
+    } else {
+      debugPrint('🚫 [MenuController] Menu state is not open (${_menuState.name}), skipping transition');
     }
+    debugPrint('🎬 [MenuController] ===== STEP 3 COMPLETE =====');
+    
+    final totalTime = DateTime.now().difference(startTime).inMilliseconds;
+    debugPrint('✅ [MenuController] SMOOTH selection process completed in ${totalTime}ms');
+    debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW END =====');
   }
 
   double getTune(MenuItems id) {

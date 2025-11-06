@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/background_animation_widget.dart' as bg;
+import '../widgets/enhanced_menu_widget.dart' as bg;
 import '../widgets/liquid_glass_box_widget.dart';
 import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
@@ -19,11 +19,13 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   
   // Debounce variables
   bool _isAnimating = false;
   DateTime? _lastTapTime;
   bool _isMenuAnimating = false;
+  bool _isProcessingStateChange = false;
   
   // Perfect values from debug panel
   double _leftMargin = 100.5;
@@ -42,7 +44,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   void initState() {
     super.initState();
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 1200), // Even longer for ultra-smooth animation
       vsync: this,
     );
     _fadeAnimation = Tween<double>(
@@ -50,15 +52,20 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       end: 0.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutQuart, // Ultra-smooth easing curve
     ));
     
-    // Listen to menu state changes to handle menu item selection
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98, // Subtle scale down for elegant effect
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOutQuart,
+    ));
+    
+    // Ensure the card starts visible when menu is closed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final menuController = Provider.of<AppMenuController>(context, listen: false);
-      menuController.addListener(_onMenuStateChanged);
-      
-      // Ensure the card starts visible when menu is closed
       if (menuController.menuState == MenuState.close) {
         _fadeController.reset();
       }
@@ -67,68 +74,227 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
 
   MenuState? _lastProcessedState;
   
-  void _onMenuStateChanged() {
-    final menuController = Provider.of<AppMenuController>(context, listen: false);
+  void _handleMenuStateChange(AppMenuController menuController) {
+    final startTime = DateTime.now();
+    
+    debugPrint('🔄 [MenuState] ===== STATE CHANGE HANDLER START =====');
+    debugPrint('🔄 [MenuState] STATE CHANGE TRIGGERED: ${menuController.menuState}');
+    debugPrint('🔄 [MenuState] Time: ${DateTime.now().toString().substring(11, 23)}');
+    debugPrint('🔄 [MenuState] Current animation states:');
+    debugPrint('🔄 [MenuState]   - _isAnimating: $_isAnimating');
+    debugPrint('🔄 [MenuState]   - _isMenuAnimating: $_isMenuAnimating');
+    debugPrint('🔄 [MenuState]   - _isProcessingStateChange: $_isProcessingStateChange');
+    debugPrint('🔄 [MenuState]   - _lastProcessedState: $_lastProcessedState');
+    debugPrint('🔄 [MenuState]   - fadeController.status: ${_fadeController.status}');
+    debugPrint('🔄 [MenuState]   - fadeController.value: ${_fadeController.value}');
+    
+    // Prevent processing if already processing a state change
+    if (_isProcessingStateChange) {
+      debugPrint('🚫 [MenuState] PROCESSING IN PROGRESS - ignoring: ${menuController.menuState}');
+      debugPrint('🔄 [MenuState] ===== STATE CHANGE HANDLER END (IGNORED) =====');
+      return;
+    }
     
     // Prevent processing the same state change multiple times
     if (_lastProcessedState == menuController.menuState) {
       debugPrint('🚫 [MenuState] DUPLICATE state change ignored: ${menuController.menuState}');
+      debugPrint('🔄 [MenuState] ===== STATE CHANGE HANDLER END (DUPLICATE) =====');
       return;
     }
     
+    _isProcessingStateChange = true;
     _lastProcessedState = menuController.menuState;
-    debugPrint('🔄 [MenuState] STATE CHANGED to: ${menuController.menuState}');
+    debugPrint('🔄 [MenuState] STATE ACCEPTED - Processing: ${menuController.menuState}');
     
     if (menuController.menuState == MenuState.close) {
-      debugPrint('🎬 [MenuState] MENU CLOSING - Starting transition to background');
+      debugPrint('🎬 [MenuState] ===== CLOSE STATE PROCESSING START =====');
+      debugPrint('🎬 [MenuState] MENU CLOSING - Starting crossfade transition');
+      debugPrint('🎬 [MenuState] Current fade controller status: ${_fadeController.status}');
+      debugPrint('🎬 [MenuState] Current fade controller value: ${_fadeController.value}');
       
+      final setStateStartTime = DateTime.now();
+      debugPrint('🎬 [MenuState] About to call setState for close...');
       setState(() {
         _isMenuAnimating = false;
       });
+      final setStateTime = DateTime.now().difference(setStateStartTime).inMilliseconds;
+      debugPrint('⏱️ [MenuState] setState (close) took: ${setStateTime}ms');
+      debugPrint('🎬 [MenuState] setState complete, new states:');
+      debugPrint('🎬 [MenuState]   - _isMenuAnimating: $_isMenuAnimating');
       
-      // Wait for menu close animation to complete, then fade in card
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted && _lastProcessedState == MenuState.close) {
-          debugPrint('🎬 [MenuState] Starting card fade-in');
-          _fadeController.reverse().then((_) {
-            if (mounted) {
-              setState(() {
-                _isAnimating = false;
-              });
-              debugPrint('✅ [MenuState] TRANSITION TO BACKGROUND COMPLETE');
-            }
-          });
-        }
+      // Start crossfade transition immediately
+      debugPrint('🎬 [MenuState] Starting crossfade: menu fade-out + card fade-in');
+      debugPrint('🎬 [MenuState] About to call _fadeController.reverse()...');
+      final fadeStartTime = DateTime.now();
+      
+      // Ultra-smooth crossfade: card fades in as menu fades out with extended timing
+      _fadeController.reverse().then((_) {
+        final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
+        debugPrint('🎬 [MenuState] *** ULTRA-SMOOTH FADE REVERSE COMPLETED ***');
+        debugPrint('🎬 [MenuState] Crossfade completed in ${fadeTime}ms');
+        debugPrint('🎬 [MenuState] Final fade controller status: ${_fadeController.status}');
+        debugPrint('🎬 [MenuState] Final fade controller value: ${_fadeController.value}');
+        
+        // Add extra delay to ensure menu fully fades before showing card
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) {
+            debugPrint('🎬 [MenuState] Widget still mounted, calling final setState...');
+            final finalSetStateStartTime = DateTime.now();
+            setState(() {
+              _isAnimating = false;
+            });
+            final finalSetStateTime = DateTime.now().difference(finalSetStateStartTime).inMilliseconds;
+            debugPrint('⏱️ [MenuState] Final setState took: ${finalSetStateTime}ms');
+            debugPrint('🎬 [MenuState] Final states:');
+            debugPrint('🎬 [MenuState]   - _isAnimating: $_isAnimating');
+            
+            final totalTime = DateTime.now().difference(startTime).inMilliseconds;
+            debugPrint('✅ [MenuState] ULTRA-SMOOTH CROSSFADE COMPLETE in ${totalTime}ms');
+            _isProcessingStateChange = false; // Reset processing flag
+            debugPrint('🎬 [MenuState] Processing flag reset');
+          } else {
+            debugPrint('🚫 [MenuState] Widget not mounted, skipping final setState');
+          }
+          debugPrint('🎬 [MenuState] ===== CLOSE STATE PROCESSING END =====');
+        });
+      }).catchError((error) {
+        debugPrint('🚨 [MenuState] ERROR in fade controller reverse: $error');
+        _isProcessingStateChange = false;
       });
     } else if (menuController.menuState == MenuState.open) {
       debugPrint('🎬 [MenuState] MENU OPENING - Coordinating with background animation');
       
+      final setStateStartTime = DateTime.now();
       setState(() {
         _isMenuAnimating = true;
       });
+      final setStateTime = DateTime.now().difference(setStateStartTime).inMilliseconds;
+      debugPrint('⏱️ [MenuState] setState (open) took: ${setStateTime}ms');
       
-      // Reset animation flags after menu fully opens
-      Future.delayed(const Duration(milliseconds: 800), () {
+      // Reset animation flags after menu fully opens with longer timing for smooth transitions
+      debugPrint('⏳ [MenuState] Waiting 800ms for smooth menu open animation...');
+      Future.delayed(const Duration(milliseconds: 800), () { // Longer timing for smoother transitions
         if (mounted && _lastProcessedState == MenuState.open) {
+          final finalSetStateStartTime = DateTime.now();
           setState(() {
-            _isAnimating = false;
+            _isAnimating = false; // CRITICAL: Reset this so close button works
+            _isMenuAnimating = false; // Also reset this
           });
-          debugPrint('✅ [MenuState] MENU OPEN COMPLETE');
+          final finalSetStateTime = DateTime.now().difference(finalSetStateStartTime).inMilliseconds;
+          debugPrint('⏱️ [MenuState] Final setState (open) took: ${finalSetStateTime}ms');
+          debugPrint('🔓 [MenuState] Animation flags RESET - Close button now enabled');
+          
+          final totalTime = DateTime.now().difference(startTime).inMilliseconds;
+          debugPrint('✅ [MenuState] SMOOTH MENU OPEN COMPLETE in ${totalTime}ms - CLOSE BUTTON READY');
+          _isProcessingStateChange = false; // Reset processing flag
         }
       });
     }
+    
+    // Fallback: Reset processing flag after a timeout
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_isProcessingStateChange) {
+        debugPrint('⚠️ [MenuState] Timeout - resetting processing flag');
+        _isProcessingStateChange = false;
+      }
+    });
+  }
+
+  Widget _buildCardContent() {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Content container for positioning
+          Transform.translate(
+            offset: Offset(_contentOffsetX, _contentOffsetY),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Hero Section
+                Text(
+                  'Hello, I\'m',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    fontSize: 24,
+                    fontFamily: 'Ganyme',
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'ALI SINAEE',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 80,
+                    fontFamily: 'Ganyme',
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 2.0,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: 120,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha:0.4),
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                
+                // Description
+                Text(
+                  'Senior Flutter Expert & Mobile App Developer',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha:0.4),
+                    fontSize: 28,
+                    fontFamily: 'Ganyme',
+                    fontWeight: FontWeight.w300,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 60),
+                
+                // CTA Button
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha:0.1),
+                    borderRadius: BorderRadius.circular(35),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha:0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'GET IN TOUCH',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha:0.5),
+                      fontSize: 18,
+                      fontFamily: 'Ganyme',
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
-    // Remove listener to prevent memory leaks
-    try {
-      final menuController = Provider.of<AppMenuController>(context, listen: false);
-      menuController.removeListener(_onMenuStateChanged);
-    } catch (e) {
-      // Context might be disposed, ignore error
-    }
     super.dispose();
   }
 
@@ -163,42 +329,63 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
-    // First fade out the main card
+    // First fade out the main card with smooth animation
     debugPrint('🎬 [MenuButton] Starting card fade-out animation');
     final fadeStartTime = DateTime.now();
-    _fadeController.forward().then((_) {
-      final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
-      debugPrint('🎬 [MenuButton] Card fade-out completed in ${fadeTime}ms');
-      
+    
+    // Start menu state change with perfect timing for ultra-smooth transition
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted) {
-        debugPrint('🎬 [MenuButton] Triggering menu state change');
+        debugPrint('🎬 [MenuButton] Triggering menu state change (perfectly timed)');
         final menuStartTime = DateTime.now();
         menuController.onMenuButtonTap();
         final menuTime = DateTime.now().difference(menuStartTime).inMilliseconds;
         debugPrint('🎬 [MenuButton] Menu state change took: ${menuTime}ms');
       }
     });
+    
+    _fadeController.forward().then((_) {
+      final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
+      debugPrint('🎬 [MenuButton] Card fade-out completed in ${fadeTime}ms');
+    });
   }
 
   void _onMenuClose() {
+    final now = DateTime.now();
+    debugPrint('🎯 [MenuClose] CLOSE TAP DETECTED at ${now.toString().substring(11, 23)}');
+    debugPrint('🎯 [MenuClose] _isAnimating: $_isAnimating, _isMenuAnimating: $_isMenuAnimating');
+    
     if (_isAnimating || _isMenuAnimating) {
+      debugPrint('🚫 [MenuClose] TAP IGNORED - Animation in progress');
       return; // Ignore taps during animation
     }
     
-    final now = DateTime.now();
-    if (_lastTapTime != null && now.difference(_lastTapTime!).inMilliseconds < 500) {
-      return; // Debounce: ignore taps within 500ms
+    if (_lastTapTime != null) {
+      final timeDiff = now.difference(_lastTapTime!).inMilliseconds;
+      debugPrint('🎯 [MenuClose] Time since last tap: ${timeDiff}ms');
+      if (timeDiff < 500) {
+        debugPrint('🚫 [MenuClose] TAP IGNORED - Debounce active (${timeDiff}ms < 500ms)');
+        return; // Debounce: ignore taps within 500ms
+      }
     }
     
+    debugPrint('✅ [MenuClose] TAP ACCEPTED - Starting menu close animation');
     _lastTapTime = now;
+    
+    final startTime = DateTime.now();
     setState(() {
       _isAnimating = true;
     });
+    final setStateTime = DateTime.now().difference(startTime).inMilliseconds;
+    debugPrint('⏱️ [MenuClose] setState took: ${setStateTime}ms');
     
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
-    // Close the menu first - this will trigger smooth transition back
+    debugPrint('🎬 [MenuClose] Triggering menu state change to CLOSE');
+    final menuStartTime = DateTime.now();
     menuController.onMenuButtonTap();
+    final menuTime = DateTime.now().difference(menuStartTime).inMilliseconds;
+    debugPrint('🎬 [MenuClose] Menu state change took: ${menuTime}ms');
   }
 
 
@@ -206,6 +393,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return Consumer<AppMenuController>(
       builder: (context, menuController, child) {
+        // Handle state changes directly in the Consumer
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleMenuStateChange(menuController);
+        });
+        
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -214,7 +406,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               // Always show background animation, it handles menu state internally
           RepaintBoundary(
             key: backgroundKey,
-                child: const bg.BackgroundAnimationWidget(),
+                child: const bg.EnhancedBackgroundAnimationWidget(),
           ),
           
               // Liquid Glass Menu button - changes to close button when menu is open
@@ -226,7 +418,19 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                   child: menuController.menuState == MenuState.open
                       ? GestureDetector(
                           key: const ValueKey('close'),
-                          onTap: _isAnimating ? null : _onMenuClose,
+                          onTap: () {
+                            final now = DateTime.now();
+                            debugPrint('🎯 [CloseButton] CLOSE BUTTON TAPPED at ${now.toString().substring(11, 23)}');
+                            debugPrint('🎯 [CloseButton] Current states - _isAnimating: $_isAnimating, _isMenuAnimating: $_isMenuAnimating');
+                            
+                            if (_isAnimating) {
+                              debugPrint('🚫 [CloseButton] TAP IGNORED - _isAnimating is true');
+                              return;
+                            }
+                            
+                            debugPrint('✅ [CloseButton] TAP ACCEPTED - Calling _onMenuClose');
+                            _onMenuClose();
+                          },
                           child: Container(
                             width: 50,
                             height: 50,
@@ -262,7 +466,19 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                         )
                       : GestureDetector(
                           key: const ValueKey('menu'),
-                          onTap: _isAnimating ? null : _onMenuTap,
+                          onTap: () {
+                            final now = DateTime.now();
+                            debugPrint('🎯 [MenuButton] MENU BUTTON TAPPED at ${now.toString().substring(11, 23)}');
+                            debugPrint('🎯 [MenuButton] Current states - _isAnimating: $_isAnimating, _isMenuAnimating: $_isMenuAnimating');
+                            
+                            if (_isAnimating) {
+                              debugPrint('🚫 [MenuButton] TAP IGNORED - _isAnimating is true');
+                              return;
+                            }
+                            
+                            debugPrint('✅ [MenuButton] TAP ACCEPTED - Calling _onMenuTap');
+                            _onMenuTap();
+                          },
                           child: Container(
                             width: 50,
                             height: 50,
@@ -299,118 +515,33 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 ),
               ),
               
-              // One big centered card with fade animation
-              // Show card when menu is closed, with fade animation
+              // One big centered card with simple fade animation
+              // Show card when menu is closed
               if (menuController.menuState != MenuState.open)
                 AnimatedBuilder(
-                  animation: _fadeAnimation,
+                  animation: _fadeController,
                   builder: (context, child) {
-                    return Opacity(
-                      opacity: _fadeAnimation.value,
-                      child: Center(
-                        // Clean liquid glass rendering (distortion fixed in shader)
-                        child: LiquidGlassBoxWidget(
-                          key: _mainCardKey,
-                          backgroundKey: backgroundKey,
-                          width: 800,
-                          height: 600,
-                          initialPosition: Offset.zero,
-                          borderRadius: 20.0,
-                          leftMargin: _leftMargin,
-                          rightMargin: _rightMargin,
-                          topMargin: _topMargin,
-                          bottomMargin: _bottomMargin,
-                          debugBorderRadius: _borderRadius,
-                          child: Padding(
-                            padding: const EdgeInsets.all(60.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // Content container for positioning
-                                  Transform.translate(
-                                    offset: Offset(_contentOffsetX, _contentOffsetY),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        // Hero Section
-                                        Text(
-                                          'Hello, I\'m',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.3),
-                                            fontSize: 24,
-                                            fontFamily: 'Ganyme',
-                                            fontWeight: FontWeight.w300,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                        const Text(
-                                          'ALI SINAEE',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 80,
-                                            fontFamily: 'Ganyme',
-                                            fontWeight: FontWeight.w400,
-                                            letterSpacing: 2.0,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                        Container(
-                                          width: 120,
-                                          height: 3,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha:0.4),
-                                            borderRadius: BorderRadius.circular(1),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 40),
-                                        
-                                        // Description
-                                        Text(
-                                          'Senior Flutter Expert & Mobile App Developer',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha:0.4),
-                                            fontSize: 28,
-                                            fontFamily: 'Ganyme',
-                                            fontWeight: FontWeight.w300,
-                                            height: 1.4,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 60),
-                                        
-                                        // CTA Button
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha:0.1),
-                                            borderRadius: BorderRadius.circular(35),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(alpha:0.2),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'GET IN TOUCH',
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(alpha:0.5),
-                                              fontSize: 18,
-                                              fontFamily: 'Ganyme',
-                                              fontWeight: FontWeight.w400,
-                                              letterSpacing: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    return Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: Opacity(
+                        opacity: _fadeAnimation.value,
+                        child: Center(
+                          // Simple liquid glass with fade - no overlays or confusing effects
+                          child: LiquidGlassBoxWidget(
+                            key: _mainCardKey,
+                            backgroundKey: backgroundKey,
+                            width: 800,
+                            height: 600,
+                            initialPosition: Offset.zero,
+                            borderRadius: 20.0,
+                            leftMargin: _leftMargin,
+                            rightMargin: _rightMargin,
+                            topMargin: _topMargin,
+                            bottomMargin: _bottomMargin,
+                            debugBorderRadius: _borderRadius,
+                            child: Padding(
+                              padding: const EdgeInsets.all(60.0),
+                              child: _buildCardContent(),
                             ),
                           ),
                         ),
