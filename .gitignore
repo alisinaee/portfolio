@@ -49,3 +49,4 @@ app.*.map.json
 firebase-debug.log
 firebase-debug.*.log
 .firebaserc
+backup_*/
