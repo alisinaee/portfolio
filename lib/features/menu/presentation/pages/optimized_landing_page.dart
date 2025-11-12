@@ -57,6 +57,9 @@ class _OptimizedLandingPageState extends State<OptimizedLandingPage>
     
     // Listen to menu state changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before accessing state
+      if (!mounted) return;
+      
       final controller = context.read<OptimizedMenuController>();
       controller.addListener(_onMenuStateChanged);
       
@@ -76,36 +79,43 @@ class _OptimizedLandingPageState extends State<OptimizedLandingPage>
     if (controller.menuState == MenuStateEnum.close) {
       // Menu closing - fade in card
       Future.delayed(const Duration(milliseconds: 400), () {
-        if (mounted && _lastProcessedState == MenuStateEnum.close) {
-          _fadeController.reverse().then((_) {
-            if (mounted) {
-              setState(() {
-                _isAnimating = false;
-              });
-            }
+        // GUARD: Check mounted before starting animation
+        if (!mounted || _lastProcessedState != MenuStateEnum.close) return;
+        
+        _fadeController.reverse().then((_) {
+          // GUARD: Check mounted before setState
+          if (!mounted) return;
+          
+          setState(() {
+            _isAnimating = false;
           });
-        }
+        });
       });
     } else {
       // Menu opening
       Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted && _lastProcessedState == MenuStateEnum.open) {
-          setState(() {
-            _isAnimating = false;
-          });
-        }
+        // GUARD: Check mounted before setState
+        if (!mounted || _lastProcessedState != MenuStateEnum.open) return;
+        
+        setState(() {
+          _isAnimating = false;
+        });
       });
     }
   }
 
   @override
   void dispose() {
+    // GUARD: Ensure animation controller is disposed properly
     _fadeController.dispose();
+    
+    // GUARD: Safely remove listener with error handling
     try {
       final controller = context.read<OptimizedMenuController>();
       controller.removeListener(_onMenuStateChanged);
     } catch (e) {
       // Context disposed, ignore
+      debugPrint('🚫 [OptimizedLandingPage] Error removing listener: $e');
     }
     super.dispose();
   }
@@ -126,10 +136,14 @@ class _OptimizedLandingPageState extends State<OptimizedLandingPage>
     
     final controller = context.read<OptimizedMenuController>();
     
+    // GUARD: Check if widget is still mounted before starting animation
+    if (!mounted) return;
+    
     _fadeController.forward().then((_) {
-      if (mounted) {
-        controller.toggleMenu();
-      }
+      // GUARD: Check mounted before processing animation completion
+      if (!mounted) return;
+      
+      controller.toggleMenu();
     });
   }
 

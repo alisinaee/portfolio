@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Performance logging utility for tracking animation performance
 /// Set kDebugPerformance to true for debugging performance issues
-const bool kDebugPerformance = true; // 🔍 Enabled for debugging
+const bool kDebugPerformance = false; // ⚡ OPTIMIZED: Disabled for better performance
 
 class PerformanceLogger {
   static final Map<String, _PerformanceMetrics> _metrics = {};

@@ -74,7 +74,11 @@ class _EnhancedMovingRowState extends State<EnhancedMovingRow>
     // Start animation after initial delay
     if (_ownsController) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // GUARD: Check mounted before scheduling delayed animation
+        if (!mounted) return;
+        
         Future.delayed(Duration(seconds: widget.delaySec)).then((_) {
+          // GUARD: Check mounted and not disposed before starting animation
           if (mounted && !_isDisposed) {
             _startAnimationCycle();
           }
@@ -92,7 +96,11 @@ class _EnhancedMovingRowState extends State<EnhancedMovingRow>
   @override
   void dispose() {
     PerformanceLogger.logAnimation(_performanceId, 'Disposing Enhanced Version');
+    
+    // GUARD: Mark as disposed to prevent animation operations
     _isDisposed = true;
+    
+    // GUARD: Ensure animation controller is disposed properly
     if (_ownsController) {
       _controller.dispose();
     }

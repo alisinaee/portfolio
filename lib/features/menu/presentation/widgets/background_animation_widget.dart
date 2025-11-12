@@ -27,9 +27,9 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
   @override
   void initState() {
     super.initState();
-    // One clock; B is exact reverse of A → always opposite direction
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 45));
-    _animA = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    // ⚡ OPTIMIZED: One clock; B is exact reverse of A → always opposite direction
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 18)); // ⚡ OPTIMIZED: Reduced from 20s
+    _animA = CurvedAnimation(parent: _controller, curve: Curves.linear); // Fastest curve
     _animB = ReverseAnimation(_animA);
     _controller.repeat(reverse: true);
   }
@@ -45,7 +45,8 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
     required bool isOnHover,
   }) {
     if (menuState == MenuState.open) {
-      return Tween<double>(begin: 1000, end: isOnHover ? 1500 : 1000);
+      // ⚡ OPTIMIZED: Smoother hover - only 15% increase instead of 50%
+      return Tween<double>(begin: 1000, end: isOnHover ? 1150 : 1000);
     } else {
       return Tween<double>(begin: 1000, end: flex * 100);
     }
@@ -127,14 +128,14 @@ class _MenuItem extends StatelessWidget {
       builder: (context, data, child) {
         return TweenAnimationBuilder(
           duration: isMenuOpen 
-              ? const Duration(milliseconds: 2000) 
-              : const Duration(seconds: 10),
+              ? const Duration(milliseconds: 800) // ⚡ OPTIMIZED: Slower for smooth hover (50 frames)
+              : const Duration(seconds: 9), // ⚡ OPTIMIZED: Faster background animation
           tween: tweenManager(
             menuState: data.state,
             flex: menuItem.flexSize, 
             isOnHover: data.isHover,
           ),
-          curve: Curves.easeInOut,
+          curve: Curves.easeInOut, // ⚡ OPTIMIZED: Smoother curve for hover
           builder: (context, value, child) {
             return Expanded(
               flex: value.toInt(), 
@@ -183,17 +184,17 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-/// Const separator widget with RepaintBoundary
+/// ⚡ OPTIMIZED: Const separator widget with RepaintBoundary
 class _MenuSeparator extends StatelessWidget {
   const _MenuSeparator();
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        color: const Color(0xFF404040),
+    return const RepaintBoundary(
+      child: SizedBox(
         width: double.infinity,
         height: 0.2,
+        child: ColoredBox(color: Color(0xFF404040)),
       ),
     );
   }

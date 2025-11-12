@@ -60,6 +60,8 @@ class _StreamLiquidGlassWidgetState extends State<StreamLiquidGlassWidget>
     
     // Start the background stream capture
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before starting capture
+      if (!mounted) return;
       BackgroundStreamChannel().startCapture(widget.backgroundKey);
     });
   }
@@ -101,6 +103,9 @@ class _StreamLiquidGlassWidgetState extends State<StreamLiquidGlassWidget>
   }
 
   void _updateMousePosition(Offset position) {
+    // GUARD: Check mounted before setState
+    if (!mounted) return;
+    
     setState(() {
       _mousePosition = position;
     });

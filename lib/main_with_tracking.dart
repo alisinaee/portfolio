@@ -13,11 +13,15 @@ import 'features/menu/presentation/pages/main_app_widget.dart';
 import 'core/utils/memory_manager.dart';
 import 'core/effects/liquid_glass/shader_manager.dart';
 
+// Import new performance tracking
+import 'core/performance/advanced_performance_tracker.dart';
+import 'core/performance/performance_overlay.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ⚡ OPTIMIZED: Only enable frame timing in debug mode
-  if (!kIsWeb && kDebugPerformance) {
+  // Register frame timings logger for slow-frame diagnostics (guarded on web)
+  if (!kIsWeb) {
     SchedulerBinding.instance.addTimingsCallback((List<FrameTiming> timings) {
       for (final timing in timings) {
         final total = timing.totalSpan;
@@ -28,10 +32,15 @@ void main() async {
     });
   }
   
-  // Start web-friendly jank monitor (only if debug enabled)
+  // Start web-friendly jank monitor
   if (kDebugPerformance) {
     PerformanceLogger.startJankMonitor();
   }
+  
+  // 🆕 Start advanced performance tracking
+  AdvancedPerformanceTracker.instance.startMonitoring(
+    reportInterval: const Duration(seconds: 10),
+  );
   
   // Initialize Firebase
   await Firebase.initializeApp(
@@ -71,10 +80,11 @@ class MovingTextBackgroundApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        // Wrap with PerformanceMonitor for monitoring
-        // Set showOverlay to true to enable performance monitoring
-        // NOTE: Disable in production for better performance!
-        home: const MainAppWidget(),
+        // 🆕 Wrap with PerformanceOverlay for real-time monitoring
+        home: PerformanceOverlay(
+          enabled: kDebugPerformance, // Only in debug mode
+          child: const MainAppWidget(),
+        ),
       ),
     );
   }

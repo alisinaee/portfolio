@@ -83,6 +83,8 @@ class _RealLiquidGlassCardState extends State<RealLiquidGlassCard> with TickerPr
     
     // Capture background after a short delay
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureBackground();
     });
   }

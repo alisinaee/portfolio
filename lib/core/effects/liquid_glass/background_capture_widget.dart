@@ -58,6 +58,8 @@ class _BackgroundCaptureWidgetState extends State<BackgroundCaptureWidget>
     _startContinuousCapture();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureBackground();
     });
   }

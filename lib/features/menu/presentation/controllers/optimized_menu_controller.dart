@@ -98,16 +98,34 @@ class OptimizedMenuController extends ChangeNotifier {
   }
 
   /// Update hover state for item
+  /// 
+  /// Performance optimizations:
+  /// - Early return if hover state hasn't changed (prevents unnecessary updates)
+  /// - Only creates new state if hover state actually changed
+  /// - Tracks prevented notifications for performance monitoring
   void updateHover(String itemId, bool isHover) {
+    // OPTIMIZATION 1: Early return if hover state hasn't changed
+    // This is the most important optimization - prevents unnecessary state updates
     final currentHover = _state.hoverStates[itemId] ?? false;
     if (currentHover == isHover) {
       _preventedNotifications++;
+      if (kDebugMode) {
+        debugPrint('🚫 [OptimizedMenuController] Hover update skipped for $itemId (no change: $isHover)');
+      }
       return;
     }
 
+    // OPTIMIZATION 2: Only create new state if hover actually changed
+    // This ensures reference equality checks work properly in Selectors
     final newHoverStates = Map<String, bool>.from(_state.hoverStates);
     newHoverStates[itemId] = isHover;
     
+    if (kDebugMode) {
+      debugPrint('✅ [OptimizedMenuController] Hover state updated for $itemId: $currentHover -> $isHover');
+    }
+    
+    // OPTIMIZATION 3: Use immutable state update
+    // This triggers notification only if state reference changed
     _updateState(_state.copyWith(hoverStates: newHoverStates));
   }
 

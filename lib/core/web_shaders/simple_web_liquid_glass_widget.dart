@@ -82,6 +82,10 @@ class _SimpleWebLiquidGlassWidgetState extends State<SimpleWebLiquidGlassWidget>
 
   void _updateMousePosition(Offset position) {
     debugPrint('🔍 [SimpleWebLiquidGlass] Mouse position updated: $position');
+    
+    // GUARD: Check mounted before setState
+    if (!mounted) return;
+    
     setState(() {
       _mousePosition = position;
     });

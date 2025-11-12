@@ -61,6 +61,8 @@ class _SimpleFullCoverageWidgetState extends State<SimpleFullCoverageWidget>
     
     // Capture background after shader is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureBackground();
     });
   }
@@ -132,6 +134,9 @@ class _SimpleFullCoverageWidgetState extends State<SimpleFullCoverageWidget>
   }
 
   void _updateMousePosition(Offset position) {
+    // GUARD: Check mounted before setState
+    if (!mounted) return;
+    
     setState(() {
       _mousePosition = position;
     });

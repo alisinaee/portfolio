@@ -29,12 +29,12 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
   void initState() {
     super.initState();
     
-    // PERFORMANCE: Faster animation controller for better performance
+    // PERFORMANCE: Optimized animation controller
     _controller = AnimationController(
       vsync: this, 
-      duration: const Duration(seconds: 30) // Reduced from 45s to 30s
+      duration: const Duration(seconds: 25) // ⚡ OPTIMIZED: Reduced from 30s to 25s
     );
-    _animA = CurvedAnimation(parent: _controller, curve: Curves.linear); // Linear is faster than easeInOut
+    _animA = CurvedAnimation(parent: _controller, curve: Curves.linear); // Linear is fastest
     _animB = ReverseAnimation(_animA);
     
     // Start with performance optimization
@@ -52,45 +52,49 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
       debugPrint('🎬 [EnhancedMenu] Menu opening - starting SMOOTH background->menu fade');
       _isInTransition = true;
       
-      // PERFORMANCE: Faster transitions for better responsiveness
-      Future.delayed(const Duration(milliseconds: 400), () { // Reduced from 600ms
-        if (mounted && currentState == MenuState.open) {
-          debugPrint('🎬 [EnhancedMenu] Card fully faded - beginning smooth menu fade-in');
-          setState(() {
-            _shouldShowMenu = true;
-          });
+      // PERFORMANCE: Optimized transitions
+      Future.delayed(const Duration(milliseconds: 288), () { // ⚡ OPTIMIZED: 18 frames (288ms)
+        // GUARD: Check mounted before setState
+        if (!mounted || currentState != MenuState.open) return;
+        
+        debugPrint('🎬 [EnhancedMenu] Card fully faded - beginning smooth menu fade-in');
+        setState(() {
+          _shouldShowMenu = true;
+        });
+        
+        // Complete transition with optimized timing
+        Future.delayed(const Duration(milliseconds: 272), () { // ⚡ OPTIMIZED: 17 frames (272ms)
+          // GUARD: Check mounted before setState
+          if (!mounted || currentState != MenuState.open) return;
           
-          // Complete transition with optimized timing
-          Future.delayed(const Duration(milliseconds: 300), () { // Reduced from 500ms
-            if (mounted && currentState == MenuState.open) {
-              debugPrint('🎬 [EnhancedMenu] Menu fade-in complete');
-              setState(() {
-                _isInTransition = false;
-              });
-            }
+          debugPrint('🎬 [EnhancedMenu] Menu fade-in complete');
+          setState(() {
+            _isInTransition = false;
           });
-        }
+        });
       });
     } else if (currentState == MenuState.close && _shouldShowMenu && !_isInTransition) {
       // Menu is closing - start smooth fade-out transition
       debugPrint('🎬 [EnhancedMenu] Menu closing - starting smooth fade-out');
       _isInTransition = true;
       
-      // PERFORMANCE: Faster close transition
-      Future.delayed(const Duration(milliseconds: 400), () { // Reduced from 600ms
-        if (mounted && currentState == MenuState.close) {
-          debugPrint('🎬 [EnhancedMenu] Smooth fade-out complete - hiding menu items');
-          setState(() {
-            _shouldShowMenu = false;
-            _isInTransition = false;
-          });
-        }
+      // PERFORMANCE: Optimized close transition
+      Future.delayed(const Duration(milliseconds: 288), () { // ⚡ OPTIMIZED: 18 frames (288ms)
+        // GUARD: Check mounted before setState
+        if (!mounted || currentState != MenuState.close) return;
+        
+        debugPrint('🎬 [EnhancedMenu] Smooth fade-out complete - hiding menu items');
+        setState(() {
+          _shouldShowMenu = false;
+          _isInTransition = false;
+        });
       });
     }
   }
 
   @override
   void dispose() {
+    // GUARD: Ensure animation controller is disposed properly
     _controller.dispose();
     super.dispose();
   }
@@ -101,7 +105,8 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
     required bool isOnHover,
   }) {
     if (menuState == MenuState.open) {
-      return Tween<double>(begin: 1000, end: isOnHover ? 1500 : 1000);
+      // ⚡ OPTIMIZED: Smoother hover - only 15% increase instead of 50%
+      return Tween<double>(begin: 1000, end: isOnHover ? 1150 : 1000);
     } else {
       return Tween<double>(begin: 1000, end: flex * 100);
     }
@@ -133,11 +138,12 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
             final isTransitioning = _isInTransition;
             
             return PerformanceBoost.withMemoryOptimization(
-              child: AnimatedOpacity(
-                opacity: isTransitioning ? 0.8 : 1.0, // PERFORMANCE: Less dramatic fade for better performance
-                duration: const Duration(milliseconds: 250), // PERFORMANCE: Faster fade
-                curve: Curves.easeOut, // PERFORMANCE: Simpler curve
-                child: DiagonalWidget(
+              child: RepaintBoundary( // ⚡ OPTIMIZED: Isolate repaints
+                child: AnimatedOpacity(
+                  opacity: isTransitioning ? 0.85 : 1.0, // ⚡ OPTIMIZED: Less dramatic fade
+                  duration: const Duration(milliseconds: 224), // ⚡ OPTIMIZED: 14 frames (224ms)
+                  curve: Curves.easeOut,
+                  child: DiagonalWidget(
                   child: Column(
                     children: data.items.asMap().entries.map((entry) {
                       final index = entry.key;
@@ -159,6 +165,7 @@ class _EnhancedBackgroundAnimationWidgetState extends State<EnhancedBackgroundAn
                         cacheKey: '${menuItem.id}-$isMenuOpen-$isInteractive-$isTransitioning',
                       );
                     }).toList(),
+                    ),
                   ),
                 ),
               ),
@@ -217,24 +224,24 @@ class _EnhancedMenuItemState extends State<_EnhancedMenuItem> with PerformanceMo
         return PerformanceBoost.withSmartRebuild<({MenuState state, bool isHover, bool isSelected})>(
           value: data,
           builder: (data) {
-            // FIXED: Proper widget hierarchy - TweenAnimationBuilder -> Expanded -> AnimatedOpacity
+            // ⚡ OPTIMIZED: Smooth hover animations
             return TweenAnimationBuilder(
               duration: widget.isMenuOpen 
-                  ? const Duration(milliseconds: 1200) // PERFORMANCE: Faster menu transitions
-                  : const Duration(seconds: 8), // PERFORMANCE: Faster background animation
+                  ? const Duration(milliseconds: 800) // ⚡ OPTIMIZED: Slower for smooth hover (50 frames)
+                  : const Duration(seconds: 7), // ⚡ OPTIMIZED: Faster background animation
               tween: widget.tweenManager(
                 menuState: data.state,
                 flex: widget.menuItem.flexSize, 
                 isOnHover: data.isHover,
               ),
-              curve: Curves.easeOut, // PERFORMANCE: Simpler curve for better performance
+              curve: Curves.easeInOut, // ⚡ OPTIMIZED: Smoother curve for hover
               builder: (context, value, child) {
                 return Expanded(
                   flex: value.toInt(), 
                   child: AnimatedOpacity(
-                    opacity: widget.isTransitioning ? 0.9 : 1.0, // PERFORMANCE: Less dramatic fade
-                    duration: const Duration(milliseconds: 200), // PERFORMANCE: Faster individual fades
-                    curve: Curves.easeOut, // PERFORMANCE: Simpler curve
+                    opacity: widget.isTransitioning ? 0.92 : 1.0, // ⚡ OPTIMIZED: Less dramatic fade
+                    duration: const Duration(milliseconds: 176), // ⚡ OPTIMIZED: 11 frames (176ms)
+                    curve: Curves.easeOut,
                     child: child!,
                   ),
                 );
@@ -290,21 +297,18 @@ class _EnhancedMenuItemState extends State<_EnhancedMenuItem> with PerformanceMo
   }
 }
 
-/// Enhanced separator with performance optimization
+/// ⚡ OPTIMIZED: Enhanced separator with performance optimization
 class _EnhancedMenuSeparator extends StatelessWidget {
   const _EnhancedMenuSeparator();
 
   @override
   Widget build(BuildContext context) {
-    return PerformanceBoost.withCache(
-      const RepaintBoundary(
-        child: SizedBox(
-          width: double.infinity,
-          height: 0.2,
-          child: ColoredBox(color: Colors.white54),
-        ),
+    return const RepaintBoundary(
+      child: SizedBox(
+        width: double.infinity,
+        height: 0.2,
+        child: ColoredBox(color: Colors.white54),
       ),
-      cacheKey: 'separator',
     );
   }
 }

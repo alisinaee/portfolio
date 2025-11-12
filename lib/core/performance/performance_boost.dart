@@ -213,38 +213,72 @@ class _MemoryOptimizedWidgetState extends State<_MemoryOptimizedWidget> {
   }
 }
 
-/// Performance monitoring mixin
+/// Performance monitoring mixin that tracks rebuild counts and frame timing
+/// 
+/// This mixin wraps the build method to measure performance metrics:
+/// - Tracks total rebuild count
+/// - Measures time between rebuilds
+/// - Detects rebuilds faster than 16ms (potential jank)
+/// - Logs performance warnings for debugging
+/// 
+/// Usage:
+/// ```dart
+/// class _MyWidgetState extends State<MyWidget> with PerformanceMonitorMixin<MyWidget> {
+///   @override
+///   Widget performanceBuild(BuildContext context) {
+///     return Container(); // Your widget tree
+///   }
+/// }
+/// ```
 mixin PerformanceMonitorMixin<T extends StatefulWidget> on State<T> {
-  int _buildCount = 0;
-  DateTime? _lastBuildTime;
+  int _rebuildCount = 0;
+  DateTime? _lastRebuild;
 
   @override
   Widget build(BuildContext context) {
+    _rebuildCount++;
+    final now = DateTime.now();
+    
+    // Detect rebuilds faster than 16ms (potential excessive rebuilding)
+    if (_lastRebuild != null) {
+      final delta = now.difference(_lastRebuild!).inMilliseconds;
+      if (delta < 16) {
+        debugPrint('⚠️ Fast rebuild detected in ${T.toString()}: ${delta}ms (rebuild #$_rebuildCount)');
+      }
+    }
+    
+    _lastRebuild = now;
+    
+    // Measure build time
     final buildStart = DateTime.now();
-    _buildCount++;
-
     final widget = performanceBuild(context);
-
-    final buildTime = DateTime.now().difference(buildStart);
-    _lastBuildTime = buildStart;
-
-    // Log slow builds
-    if (buildTime.inMilliseconds > 16) {
-      debugPrint('🐌 Slow build in ${T.toString()}: ${buildTime.inMilliseconds}ms');
+    final buildDuration = DateTime.now().difference(buildStart);
+    
+    // Log slow builds (>16ms indicates potential jank)
+    if (buildDuration.inMilliseconds > 16) {
+      debugPrint('🐌 Slow build in ${T.toString()}: ${buildDuration.inMilliseconds}ms (rebuild #$_rebuildCount)');
+    }
+    
+    // Log rebuild count periodically for monitoring
+    if (_rebuildCount % 50 == 0) {
+      debugPrint('📊 ${T.toString()} rebuild count: $_rebuildCount');
     }
 
     return widget;
   }
 
-  /// Override this instead of build()
+  /// Override this instead of build() to enable performance monitoring
   Widget performanceBuild(BuildContext context);
 
-  /// Get performance metrics
+  /// Get current performance metrics for this widget
   Map<String, dynamic> getPerformanceMetrics() {
     return {
-      'buildCount': _buildCount,
-      'lastBuildTime': _lastBuildTime?.toIso8601String(),
       'widgetType': T.toString(),
+      'rebuildCount': _rebuildCount,
+      'lastRebuildTime': _lastRebuild?.toIso8601String(),
     };
   }
+  
+  /// Get the current rebuild count
+  int get rebuildCount => _rebuildCount;
 }

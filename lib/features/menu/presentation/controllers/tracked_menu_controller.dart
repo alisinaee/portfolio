@@ -3,23 +3,25 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/menu_entity.dart';
 import '../../domain/repositories/menu_repository.dart';
 import '../../../../core/utils/performance_logger.dart';
+import '../../../../core/performance/tracking_mixins.dart';
 
-/// Optimized MenuController with smart state updates
+/// Enhanced MenuController with advanced performance tracking
 /// 
-/// Performance Improvements:
-/// - Batched state updates to reduce notifyListeners calls
-/// - Debounced hover updates to prevent excessive rebuilds
-/// - Performance logging for debugging
-/// - Immutable list references for better Selector performance
-/// - State batching mechanism using microtasks to group multiple changes
-/// - Guards to prevent duplicate state change processing
-class AppMenuController extends ChangeNotifier {
-  static const String _performanceId = 'AppMenuController';
+/// This version includes:
+/// - Detailed state change tracking
+/// - Listener count monitoring
+/// - Processing time measurement
+/// - Performance warnings for expensive operations
+class TrackedMenuController extends ChangeNotifier with StatePerformanceTracking {
+  static const String _performanceId = 'TrackedMenuController';
   final MenuRepository _menuRepository;
 
-  AppMenuController(this._menuRepository) {
+  TrackedMenuController(this._menuRepository) {
     _loadMenuItems();
   }
+
+  @override
+  String get stateId => _performanceId;
 
   MenuState _menuState = MenuState.close;
   MenuItems _selectedMenuItem = MenuItems.home;
@@ -43,6 +45,8 @@ class AppMenuController extends ChangeNotifier {
   List<MenuEntity> get menuItems => _menuItems;
 
   void _loadMenuItems() {
+    final startTime = DateTime.now();
+    
     _menuItems = _menuRepository.getMenuItems();
     
     // Initialize hover states
@@ -50,11 +54,14 @@ class AppMenuController extends ChangeNotifier {
       _hoverStates[item.id] = false;
     }
     
+    final loadTime = DateTime.now().difference(startTime);
+    
     PerformanceLogger.logAnimation(_performanceId, 'Menu items loaded', data: {
       'count': _menuItems.length,
+      'loadTime': '${loadTime.inMicroseconds / 1000}ms',
     });
     
-    notifyListeners();
+    notifyListeners(); // Tracked by StatePerformanceTracking mixin
   }
 
   bool isItemSelected(MenuItems id) {
@@ -64,9 +71,10 @@ class AppMenuController extends ChangeNotifier {
   // Guard to prevent duplicate state changes
   bool _isProcessingStateChange = false;
   
-  /// Batched state update mechanism
-  /// Groups multiple state changes into a single notifyListeners call
+  /// Batched state update mechanism with performance tracking
   void _batchUpdate(VoidCallback update) {
+    final startTime = DateTime.now();
+    
     update();
     
     if (!_isBatching) {
@@ -78,13 +86,18 @@ class AppMenuController extends ChangeNotifier {
         if (_hasPendingUpdate) {
           _hasPendingUpdate = false;
           
+          final batchTime = DateTime.now().difference(startTime);
+          
           PerformanceLogger.logAnimation(
             _performanceId, 
             'Batched update executed',
-            data: {'batchedUpdates': _batchedUpdateCount},
+            data: {
+              'batchedUpdates': _batchedUpdateCount,
+              'batchTime': '${batchTime.inMicroseconds / 1000}ms',
+            },
           );
           
-          notifyListeners();
+          notifyListeners(); // Tracked by mixin
         }
       });
     }
@@ -94,6 +107,8 @@ class AppMenuController extends ChangeNotifier {
   }
   
   void onMenuButtonTap() {
+    final startTime = DateTime.now();
+    
     // Guard: Prevent duplicate state change processing
     if (_isProcessingStateChange) {
       debugPrint('🚫 [MenuController] onMenuButtonTap ignored - already processing state change');
@@ -117,11 +132,14 @@ class AppMenuController extends ChangeNotifier {
     _batchUpdate(() {
       _menuState = newState;
       
-      debugPrint('🎮 [MenuController] State changed: $oldState -> $_menuState');
+      final processingTime = DateTime.now().difference(startTime);
+      
+      debugPrint('🎮 [MenuController] State changed: $oldState -> $_menuState in ${processingTime.inMicroseconds / 1000}ms');
       
       PerformanceLogger.logAnimation(_performanceId, 'Menu state changed', data: {
         'from': oldState.name,
         'to': _menuState.name,
+        'processingTime': '${processingTime.inMicroseconds / 1000}ms',
       });
     });
     
@@ -135,30 +153,22 @@ class AppMenuController extends ChangeNotifier {
     final startTime = DateTime.now();
     debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW START =====');
     debugPrint('🎯 [MenuController] Item selection started: ${id.name}');
-    debugPrint('🎯 [MenuController] Current selection: ${_selectedMenuItem.name}');
-    debugPrint('🎯 [MenuController] Current menu state: ${_menuState.name}');
     
     // Guard: Prevent duplicate selection processing
     if (_selectedMenuItem == id) {
       debugPrint('🔄 [MenuController] Item already selected, closing menu smoothly');
       
-      // Use batched update for state change
       _batchUpdate(() {
-        debugPrint('🔄 [MenuController] Changing state from ${_menuState.name} to close');
         _menuState = MenuState.close;
       });
       
-      debugPrint('🔄 [MenuController] Batched update scheduled, returning early');
       debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW END (SAME ITEM) =====');
       return;
     }
     
-    // Step 1: Update selection and show selection animation
-    debugPrint('🎨 [MenuController] ===== STEP 1: UPDATE SELECTION =====');
-    final selectionStartTime = DateTime.now();
     final previousSelection = _selectedMenuItem;
     
-    // Use batched update for selection change
+    // Update selection
     _batchUpdate(() {
       _selectedMenuItem = id;
       
@@ -168,44 +178,18 @@ class AppMenuController extends ChangeNotifier {
       });
     });
     
-    debugPrint('🎨 [MenuController] Selection updated: ${previousSelection.name} -> ${id.name}');
-    final selectionTime = DateTime.now().difference(selectionStartTime).inMilliseconds;
-    debugPrint('⏱️ [MenuController] Selection update took: ${selectionTime}ms');
-    debugPrint('🎨 [MenuController] ===== STEP 1 COMPLETE =====');
+    // Show selection animation
+    await Future.delayed(const Duration(milliseconds: 304));
     
-    // Step 2: Show selection animation with optimized timing
-    debugPrint('⏳ [MenuController] ===== STEP 2: SHOW SELECTION ANIMATION =====');
-    debugPrint('⏳ [MenuController] Showing selection animation for 272ms...'); // ⚡ OPTIMIZED: 17 frames
-    debugPrint('⏳ [MenuController] Current time: ${DateTime.now().toString().substring(11, 23)}');
-    await Future.delayed(const Duration(milliseconds: 272)); // ⚡ OPTIMIZED: 17 frames (272ms)
-    debugPrint('⏳ [MenuController] Selection animation period ended at: ${DateTime.now().toString().substring(11, 23)}');
-    debugPrint('⏳ [MenuController] ===== STEP 2 COMPLETE =====');
-    
-    // Step 3: Start gradual transition to background
-    debugPrint('🎬 [MenuController] ===== STEP 3: TRANSITION TO BACKGROUND =====');
-    debugPrint('🎬 [MenuController] Current menu state before transition: ${_menuState.name}');
+    // Transition to background
     if (_menuState == MenuState.open) {
-      debugPrint('🎬 [MenuController] Starting GRADUAL transition to background');
-      debugPrint('🎬 [MenuController] This will trigger coordinated menu fade-out + background fade-in');
-      
-      final closeStartTime = DateTime.now();
-      
-      // Use batched update for state change
       _batchUpdate(() {
-        debugPrint('🎬 [MenuController] Changing state from ${_menuState.name} to close');
         _menuState = MenuState.close;
       });
-      
-      final closeTime = DateTime.now().difference(closeStartTime).inMilliseconds;
-      debugPrint('⏱️ [MenuController] Gradual menu close took: ${closeTime}ms');
-      debugPrint('🎬 [MenuController] State change notification scheduled');
-    } else {
-      debugPrint('🚫 [MenuController] Menu state is not open (${_menuState.name}), skipping transition');
     }
-    debugPrint('🎬 [MenuController] ===== STEP 3 COMPLETE =====');
     
-    final totalTime = DateTime.now().difference(startTime).inMilliseconds;
-    debugPrint('✅ [MenuController] SMOOTH selection process completed in ${totalTime}ms');
+    final totalTime = DateTime.now().difference(startTime);
+    debugPrint('✅ [MenuController] Selection completed in ${totalTime.inMilliseconds}ms');
     debugPrint('🎯 [MenuController] ===== ITEM SELECTION FLOW END =====');
   }
 
@@ -215,13 +199,12 @@ class AppMenuController extends ChangeNotifier {
     return 1 - ((currentIndex - selectedIndex).abs() / _menuItems.length);
   }
   
-  /// Get hover state for a specific menu item
   bool isItemHovered(MenuItems id) {
     return _hoverStates[id] ?? false;
   }
   
-  /// Get performance metrics for hover state management
-  Map<String, dynamic> getHoverPerformanceMetrics() {
+  /// Get comprehensive performance metrics
+  Map<String, dynamic> getPerformanceMetrics() {
     final total = _hoverUpdateCount + _skippedHoverUpdates;
     final efficiency = total > 0 ? (_skippedHoverUpdates / total * 100) : 0;
     
@@ -231,31 +214,19 @@ class AppMenuController extends ChangeNotifier {
       'totalAttempts': total,
       'efficiency': '${efficiency.toStringAsFixed(1)}%',
       'debouncingActive': _hoverDebounceTimer?.isActive ?? false,
+      'batchedUpdates': _batchedUpdateCount,
+      'currentState': _menuState.name,
+      'selectedItem': _selectedMenuItem.name,
     };
   }
   
-  /// Optimized hover update with debouncing and batching
-  /// Prevents excessive rebuilds from rapid hover state changes
-  /// 
-  /// Performance optimizations:
-  /// - Early return if hover state hasn't changed (prevents unnecessary updates)
-  /// - Debouncing with 16ms delay to batch rapid hover changes
-  /// - Only notifies listeners for the specific item that changed
-  /// - Uses batched update mechanism to group multiple changes
+  /// Optimized hover update with performance tracking
   void updateMenuItemHover(MenuItems id, bool isHover) {
-    // OPTIMIZATION 1: Early return if hover state hasn't changed
-    // This prevents unnecessary state updates and notifications
+    final startTime = DateTime.now();
+    
+    // Early return if hover state hasn't changed
     if (_hoverStates[id] == isHover) {
       _skippedHoverUpdates++;
-      PerformanceLogger.logAnimation(
-        _performanceId,
-        'Hover update skipped (no change)',
-        data: {
-          'item': id.name,
-          'isHover': isHover,
-          'totalSkipped': _skippedHoverUpdates,
-        },
-      );
       return;
     }
     
@@ -268,22 +239,21 @@ class AppMenuController extends ChangeNotifier {
       return;
     }
     
-    // OPTIMIZATION 2: Cancel any pending debounce timer
-    // This ensures we batch rapid hover changes together
+    // Cancel any pending debounce timer
     _hoverDebounceTimer?.cancel();
     
-    // OPTIMIZATION 3: Update hover state immediately in memory
-    // This ensures the state is current even before notification
+    // Update hover state immediately in memory
     final previousHoverState = _hoverStates[id];
     _hoverStates[id] = isHover;
     _menuItems[index].isOnHover = isHover;
     _hasPendingHoverUpdate = true;
     
-    // OPTIMIZATION 4: Debounce notifications with 16ms delay (1 frame)
-    // This batches rapid hover changes and aligns with frame boundaries
+    // Debounce notifications with 16ms delay (1 frame)
     _hoverDebounceTimer = Timer(const Duration(milliseconds: 16), () {
       if (_hasPendingHoverUpdate) {
         _hasPendingHoverUpdate = false;
+        
+        final hoverTime = DateTime.now().difference(startTime);
         
         PerformanceLogger.logAnimation(
           _performanceId,
@@ -292,16 +262,12 @@ class AppMenuController extends ChangeNotifier {
             'item': id.name,
             'previousState': previousHoverState,
             'newState': isHover,
-            'affectedItemOnly': true,
+            'processingTime': '${hoverTime.inMicroseconds / 1000}ms',
           },
         );
         
-        // OPTIMIZATION 5: Use batched update mechanism
-        // This groups multiple state changes into a single notifyListeners call
-        // Only the specific menu item with Selector will rebuild
         _batchUpdate(() {
-          // State already updated above, just trigger notification
-          // The Selector in _MenuItem will check if THIS item's hover state changed
+          // State already updated, just trigger notification
         });
       }
     });
@@ -311,6 +277,13 @@ class AppMenuController extends ChangeNotifier {
   void dispose() {
     // Clean up debounce timer
     _hoverDebounceTimer?.cancel();
+    
+    // Print final performance metrics
+    final metrics = getPerformanceMetrics();
+    debugPrint('📊 [MenuController] Final Performance Metrics:');
+    metrics.forEach((key, value) {
+      debugPrint('   $key: $value');
+    });
     
     PerformanceLogger.logAnimation(_performanceId, 'Controller disposed');
     super.dispose();

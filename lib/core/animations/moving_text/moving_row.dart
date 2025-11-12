@@ -83,7 +83,11 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
     // Start animation after initial delay (only if we own the controller)
     if (_ownsController) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // GUARD: Check mounted before scheduling delayed animation
+        if (!mounted) return;
+        
         Future.delayed(Duration(seconds: widget.delaySec)).then((_) {
+          // GUARD: Check mounted and not disposed before starting animation
           if (mounted && !_isDisposed) {
             PerformanceLogger.logAnimation(_performanceId, 'Starting animation loop');
             _startAnimationCycle();
@@ -106,7 +110,10 @@ class _MovingRowState extends State<MovingRow> with SingleTickerProviderStateMix
       'total_cycles': _cycleCount,
     });
     
+    // GUARD: Mark as disposed to prevent animation operations
     _isDisposed = true;
+    
+    // GUARD: Ensure animation controller is disposed properly
     if (_ownsController) {
       _controller.dispose();
     }

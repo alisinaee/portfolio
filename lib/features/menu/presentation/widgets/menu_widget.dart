@@ -41,20 +41,6 @@ class _BackgroundAnimationWidgetState extends State<BackgroundAnimationWidget> w
     }
   }
 
-  void _pauseAnimation() {
-    if (mounted) {
-      _controller.stop();
-      _isAnimationActive = false;
-    }
-  }
-
-  void _resumeAnimation() {
-    if (mounted && !_isAnimationActive) {
-      _isAnimationActive = true;
-      _startAnimation();
-    }
-  }
-
   @override
   void dispose() {
     _isAnimationActive = false;

@@ -97,6 +97,8 @@ class _ProperLiquidGlassCardState extends State<ProperLiquidGlassCard> with Tick
     
     // Capture background after a short delay
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureBackground();
     });
   }

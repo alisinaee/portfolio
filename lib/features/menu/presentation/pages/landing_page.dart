@@ -4,6 +4,7 @@ import '../widgets/liquid_glass_box_widget.dart';
 import 'package:provider/provider.dart';
 import '../controllers/menu_controller.dart';
 import '../../domain/entities/menu_entity.dart';
+import '../../../../core/performance/performance_boost.dart';
 
 
 class LandingPage extends StatefulWidget {
@@ -13,7 +14,7 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin, PerformanceMonitorMixin<LandingPage> {
   final GlobalKey backgroundKey = GlobalKey();
   final GlobalKey<LiquidGlassBoxWidgetState> _mainCardKey = GlobalKey();
   
@@ -28,15 +29,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   bool _isProcessingStateChange = false;
   
   // Perfect values from debug panel
-  double _leftMargin = 100.5;
-  double _rightMargin = 101.0;
-  double _topMargin = 2.5;
-  double _bottomMargin = 2.5;
-  double _borderRadius = 166.5;
+  final double _leftMargin = 100.5;
+  final double _rightMargin = 101.0;
+  final double _topMargin = 2.5;
+  final double _bottomMargin = 2.5;
+  final double _borderRadius = 166.5;
   
   // Content positioning offsets - perfect centering
-  double _contentOffsetX = 0.0;
-  double _contentOffsetY = 0.0;
+  final double _contentOffsetX = 0.0;
+  final double _contentOffsetY = 0.0;
   
 
 
@@ -44,7 +45,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   void initState() {
     super.initState();
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800), // PERFORMANCE: Faster animation for better responsiveness
+      duration: const Duration(milliseconds: 288), // ⚡ OPTIMIZED: 18 frames (288ms)
       vsync: this,
     );
     _fadeAnimation = Tween<double>(
@@ -52,19 +53,22 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       end: 0.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut, // PERFORMANCE: Simpler curve for better performance
+      curve: Curves.easeOut,
     ));
     
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.99, // PERFORMANCE: Less dramatic scale for better performance
+      end: 0.985, // ⚡ OPTIMIZED: Minimal scale for better performance
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut, // PERFORMANCE: Simpler curve
+      curve: Curves.easeOut,
     ));
     
     // Ensure the card starts visible when menu is closed
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before accessing state
+      if (!mounted) return;
+      
       final menuController = Provider.of<AppMenuController>(context, listen: false);
       if (menuController.menuState == MenuState.close) {
         _fadeController.reset();
@@ -114,9 +118,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       
       final setStateStartTime = DateTime.now();
       debugPrint('🎬 [MenuState] About to call setState for close...');
-      setState(() {
-        _isMenuAnimating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isMenuAnimating = false;
+        });
+      }
       final setStateTime = DateTime.now().difference(setStateStartTime).inMilliseconds;
       debugPrint('⏱️ [MenuState] setState (close) took: ${setStateTime}ms');
       debugPrint('🎬 [MenuState] setState complete, new states:');
@@ -128,7 +134,20 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       final fadeStartTime = DateTime.now();
       
       // Ultra-smooth crossfade: card fades in as menu fades out with extended timing
+      // GUARD: Check if widget is still mounted before starting animation
+      if (!mounted) {
+        debugPrint('🚫 [MenuState] Widget not mounted, skipping fade animation');
+        _isProcessingStateChange = false;
+        return;
+      }
+      
       _fadeController.reverse().then((_) {
+        // GUARD: Check mounted before processing animation completion
+        if (!mounted) {
+          debugPrint('🚫 [MenuState] Widget not mounted after fade, skipping completion');
+          return;
+        }
+        
         final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
         debugPrint('🎬 [MenuState] *** ULTRA-SMOOTH FADE REVERSE COMPLETED ***');
         debugPrint('🎬 [MenuState] Crossfade completed in ${fadeTime}ms');
@@ -136,7 +155,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
         debugPrint('🎬 [MenuState] Final fade controller value: ${_fadeController.value}');
         
         // Add extra delay to ensure menu fully fades before showing card
-        Future.delayed(const Duration(milliseconds: 200), () {
+        Future.delayed(const Duration(milliseconds: 192), () { // ⚡ OPTIMIZED: 12 frames (192ms)
           if (mounted) {
             debugPrint('🎬 [MenuState] Widget still mounted, calling final setState...');
             final finalSetStateStartTime = DateTime.now();
@@ -154,6 +173,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             debugPrint('🎬 [MenuState] Processing flag reset');
           } else {
             debugPrint('🚫 [MenuState] Widget not mounted, skipping final setState');
+            _isProcessingStateChange = false;
           }
           debugPrint('🎬 [MenuState] ===== CLOSE STATE PROCESSING END =====');
         });
@@ -165,15 +185,18 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       debugPrint('🎬 [MenuState] MENU OPENING - Coordinating with background animation');
       
       final setStateStartTime = DateTime.now();
-      setState(() {
-        _isMenuAnimating = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isMenuAnimating = true;
+        });
+      }
       final setStateTime = DateTime.now().difference(setStateStartTime).inMilliseconds;
       debugPrint('⏱️ [MenuState] setState (open) took: ${setStateTime}ms');
       
-      // Reset animation flags after menu opens with optimized timing for better performance
-      debugPrint('⏳ [MenuState] Waiting 600ms for menu open animation...'); // PERFORMANCE: Faster timing
-      Future.delayed(const Duration(milliseconds: 600), () { // PERFORMANCE: Reduced from 800ms
+      // Reset animation flags after menu opens with optimized timing
+      debugPrint('⏳ [MenuState] Waiting 272ms for menu open animation...'); // ⚡ OPTIMIZED: 17 frames
+      Future.delayed(const Duration(milliseconds: 272), () { // ⚡ OPTIMIZED: 17 frames (272ms)
+        // GUARD: Check mounted before setState
         if (mounted && _lastProcessedState == MenuState.open) {
           final finalSetStateStartTime = DateTime.now();
           setState(() {
@@ -187,13 +210,17 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           final totalTime = DateTime.now().difference(startTime).inMilliseconds;
           debugPrint('✅ [MenuState] SMOOTH MENU OPEN COMPLETE in ${totalTime}ms - CLOSE BUTTON READY');
           _isProcessingStateChange = false; // Reset processing flag
+        } else if (!mounted) {
+          debugPrint('🚫 [MenuState] Widget not mounted, skipping final setState');
+          _isProcessingStateChange = false;
         }
       });
     }
     
     // Fallback: Reset processing flag after a timeout
     Future.delayed(const Duration(seconds: 2), () {
-      if (_isProcessingStateChange) {
+      // GUARD: Check mounted before accessing state
+      if (mounted && _isProcessingStateChange) {
         debugPrint('⚠️ [MenuState] Timeout - resetting processing flag');
         _isProcessingStateChange = false;
       }
@@ -321,32 +348,42 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     _lastTapTime = now;
     
     final startTime = DateTime.now();
-    setState(() {
-      _isAnimating = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isAnimating = true;
+      });
+    }
     final setStateTime = DateTime.now().difference(startTime).inMilliseconds;
     debugPrint('⏱️ [MenuButton] setState took: ${setStateTime}ms');
     
     final menuController = Provider.of<AppMenuController>(context, listen: false);
     
-    // First fade out the main card with smooth animation
+    // Fade out the card and trigger menu state change when complete
     debugPrint('🎬 [MenuButton] Starting card fade-out animation');
     final fadeStartTime = DateTime.now();
     
-    // Start menu state change with optimized timing for better performance
-    Future.delayed(const Duration(milliseconds: 400), () { // PERFORMANCE: Faster timing
-      if (mounted) {
-        debugPrint('🎬 [MenuButton] Triggering menu state change (perfectly timed)');
-        final menuStartTime = DateTime.now();
-        menuController.onMenuButtonTap();
-        final menuTime = DateTime.now().difference(menuStartTime).inMilliseconds;
-        debugPrint('🎬 [MenuButton] Menu state change took: ${menuTime}ms');
-      }
-    });
+    // GUARD: Check if widget is still mounted before starting animation
+    if (!mounted) {
+      debugPrint('🚫 [MenuButton] Widget not mounted, skipping fade animation');
+      return;
+    }
     
+    // PERFORMANCE: Trigger menu state change immediately when fade completes (no unnecessary delay)
     _fadeController.forward().then((_) {
+      // GUARD: Check mounted before processing animation completion
+      if (!mounted) {
+        debugPrint('🚫 [MenuButton] Widget not mounted after fade, skipping menu state change');
+        return;
+      }
+      
       final fadeTime = DateTime.now().difference(fadeStartTime).inMilliseconds;
       debugPrint('🎬 [MenuButton] Card fade-out completed in ${fadeTime}ms');
+      
+      debugPrint('🎬 [MenuButton] Triggering menu state change (synchronized with fade)');
+      final menuStartTime = DateTime.now();
+      menuController.onMenuButtonTap();
+      final menuTime = DateTime.now().difference(menuStartTime).inMilliseconds;
+      debugPrint('🎬 [MenuButton] Menu state change took: ${menuTime}ms');
     });
   }
 
@@ -373,9 +410,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     _lastTapTime = now;
     
     final startTime = DateTime.now();
-    setState(() {
-      _isAnimating = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isAnimating = true;
+      });
+    }
     final setStateTime = DateTime.now().difference(startTime).inMilliseconds;
     debugPrint('⏱️ [MenuClose] setState took: ${setStateTime}ms');
     
@@ -390,11 +429,17 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
 
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AppMenuController>(
-      builder: (context, menuController, child) {
-        // Handle state changes directly in the Consumer
+  Widget performanceBuild(BuildContext context) {
+    return Selector<AppMenuController, MenuState>(
+      selector: (_, controller) => controller.menuState,
+      shouldRebuild: (previous, next) => previous != next,
+      builder: (context, menuState, child) {
+        // Handle state changes with mounted check
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          // GUARD: Check mounted before processing state changes
+          if (!mounted) return;
+          
+          final menuController = Provider.of<AppMenuController>(context, listen: false);
           _handleMenuStateChange(menuController);
         });
         
@@ -402,11 +447,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background animation with RepaintBoundary for liquid glass capture
-              // Always show background animation, it handles menu state internally
+          // ⚡ OPTIMIZED: Background animation with RepaintBoundary for liquid glass capture
           RepaintBoundary(
             key: backgroundKey,
-                child: const bg.EnhancedBackgroundAnimationWidget(),
+            child: const bg.EnhancedBackgroundAnimationWidget(),
           ),
           
               // Liquid Glass Menu button - changes to close button when menu is open
@@ -415,7 +459,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 left: 20,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  child: menuController.menuState == MenuState.open
+                  child: menuState == MenuState.open
                       ? GestureDetector(
                           key: const ValueKey('close'),
                           onTap: () {
@@ -515,39 +559,40 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 ),
               ),
               
-              // One big centered card with simple fade animation
-              // Show card when menu is closed
-              if (menuController.menuState != MenuState.open)
-                AnimatedBuilder(
-                  animation: _fadeController,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Opacity(
-                        opacity: _fadeAnimation.value,
-                        child: Center(
-                          // Simple liquid glass with fade - no overlays or confusing effects
-                          child: LiquidGlassBoxWidget(
-                            key: _mainCardKey,
-                            backgroundKey: backgroundKey,
-                            width: 800,
-                            height: 600,
-                            initialPosition: Offset.zero,
-                            borderRadius: 20.0,
-                            leftMargin: _leftMargin,
-                            rightMargin: _rightMargin,
-                            topMargin: _topMargin,
-                            bottomMargin: _bottomMargin,
-                            debugBorderRadius: _borderRadius,
-                            child: Padding(
-                              padding: const EdgeInsets.all(60.0),
-                              child: _buildCardContent(),
+              // ⚡ OPTIMIZED: Card with RepaintBoundary for better performance
+              if (menuState != MenuState.open)
+                RepaintBoundary(
+                  child: AnimatedBuilder(
+                    animation: _fadeController,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _scaleAnimation.value,
+                        child: Opacity(
+                          opacity: _fadeAnimation.value,
+                          child: Center(
+                            // Simple liquid glass with fade - no overlays or confusing effects
+                            child: LiquidGlassBoxWidget(
+                              key: _mainCardKey,
+                              backgroundKey: backgroundKey,
+                              width: 800,
+                              height: 600,
+                              initialPosition: Offset.zero,
+                              borderRadius: 20.0,
+                              leftMargin: _leftMargin,
+                              rightMargin: _rightMargin,
+                              topMargin: _topMargin,
+                              bottomMargin: _bottomMargin,
+                              debugBorderRadius: _borderRadius,
+                              child: Padding(
+                                padding: const EdgeInsets.all(60.0),
+                                child: _buildCardContent(),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
           
           // Menu is handled by BackgroundAnimationWidget internally

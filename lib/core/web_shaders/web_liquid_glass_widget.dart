@@ -107,6 +107,8 @@ class _WebLiquidGlassWidgetState extends State<WebLiquidGlassWidget>
     
     // Capture background after initialization
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureAndProcessBackground();
     });
 
@@ -218,6 +220,10 @@ class _WebLiquidGlassWidgetState extends State<WebLiquidGlassWidget>
 
   void _updateMousePosition(Offset position) {
     debugPrint('🔍 [WebLiquidGlass] Mouse position updated: $position');
+    
+    // GUARD: Check mounted before setState
+    if (!mounted) return;
+    
     setState(() {
       _mousePosition = position;
     });

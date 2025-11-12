@@ -104,15 +104,23 @@ class _NativeLiquidGlassWidgetState extends State<NativeLiquidGlassWidget>
     
     // Capture background after initialization
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // GUARD: Check mounted before capturing background
+      if (!mounted) return;
       _captureAndProcessBackground();
     });
   }
 
   @override
   void dispose() {
+    // GUARD: Ensure animation controller is disposed properly
     _animationController.dispose();
+    
+    // GUARD: Dispose of image resources
     _processedImage?.dispose();
+    
+    // GUARD: Clean up platform channel resources
     LiquidGlassPlatformChannel.dispose();
+    
     super.dispose();
   }
 
@@ -164,6 +172,9 @@ class _NativeLiquidGlassWidgetState extends State<NativeLiquidGlassWidget>
   }
 
   void _updateMousePosition(Offset position) {
+    // GUARD: Check mounted before setState
+    if (!mounted) return;
+    
     setState(() {
       _mousePosition = position;
     });
