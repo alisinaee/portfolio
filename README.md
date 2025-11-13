@@ -156,10 +156,18 @@ assets/
 ├── icons/                # SVG navigation icons
 └── images/               # Image assets
 
-Build Scripts:
+scripts/                  # Build and deployment scripts
 ├── build_wasm.sh         # WASM production build
+├── build_dev.sh          # Development build
+├── build_optimized.sh    # Optimized build
 ├── deploy_firebase.sh    # Deploy to Firebase
 └── deploy_preview.sh     # Deploy to preview channel
+
+docs/                     # Documentation
+├── QUICK_START.md        # Quick start guide
+├── performance/          # Performance documentation
+├── guides/               # Setup and testing guides
+└── fixes/                # Optimization details
 ```
 
 ---
@@ -186,12 +194,12 @@ The portfolio uses 11 unique fonts:
 
 | Guide | Description |
 |-------|-------------|
-| [QUICK_START.md](QUICK_START.md) | Quick reference guide |
-| [PERFORMANCE_GUIDE.md](PERFORMANCE_GUIDE.md) | Complete performance docs |
-| [PERFORMANCE_DEBUG_GUIDE.md](PERFORMANCE_DEBUG_GUIDE.md) | Debug animations |
-| [ANTI_LAG_OPTIMIZATIONS.md](ANTI_LAG_OPTIMIZATIONS.md) | Lag prevention |
-| [FIREBASE_SETUP.md](FIREBASE_SETUP.md) | Firebase configuration |
-| [DEPLOYMENT_SUCCESS.md](DEPLOYMENT_SUCCESS.md) | Deployment summary |
+| [Quick Start](docs/QUICK_START.md) | Quick reference guide |
+| [Performance Guide](docs/performance/PERFORMANCE_GUIDE.md) | Complete performance documentation |
+| [Testing Guide](docs/guides/TESTING_GUIDE.md) | Testing procedures |
+| [Firebase Setup](docs/guides/FIREBASE_SETUP.md) | Firebase configuration |
+| [Animation Fixes](docs/fixes/ANIMATION_FIXES.md) | Animation optimization details |
+| [Menu Fixes](docs/fixes/MENU_FIXES.md) | Menu performance improvements |
 
 ---
 
